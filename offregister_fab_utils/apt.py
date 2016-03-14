@@ -1,20 +1,28 @@
 from itertools import imap, ifilterfalse
 from functools import partial
 from operator import is_
+from collections import namedtuple
 
-from fabric.api import run, sudo, cd, get
+from fabric.api import run, sudo, cd
 
-from fs import get_tempdir_fab
 from offregister_fab_utils import skip_apt_update
+from offregister_fab_utils.fs import get_tempdir_fab
+
+Package = namedtuple('Package', ('name', 'version'))
 
 
 def is_installed(*packages):
-    return tuple(ifilterfalse(partial(is_, True),
-                              imap(lambda package: run('dpkg -s {package}'.format(package=package),
-                                                       quiet=True, warn_only=True).succeeded or package,
-                                   packages))
-                 )
-
+    """
+    :param package-name strings or Package :type splat
+    :return: packages which need installed :type tuple
+    """""
+    return tuple(ifilterfalse(partial(is_, True), imap(
+        lambda package: (run("dpkg-query --showformat='${Version}' " + '--show {}'.format(package.name),
+                             warn_only=True).startswith(package.version)
+                         if isinstance(package, Package)
+                         else run('dpkg -s {package}'.format(package=package),
+                                  quiet=True, warn_only=True).succeeded) or package,
+        packages)))
 
 def apt_depend_factory(skip_update=False):
     global skip_apt_update
@@ -29,7 +37,8 @@ def apt_depends(*packages):
         return None
     elif not skip_apt_update:
         sudo('apt-get update -qq')
-    return sudo('apt-get install -y {packages}'.format(packages=' '.join(more_to_install)))
+    return sudo('apt-get install -y {packages}'.format(
+        packages=' '.join(pkg.name if isinstance(pkg, Package) else pkg for pkg in more_to_install)))
 
 
 def download_and_install(url_prefix, packages):
@@ -38,4 +47,4 @@ def download_and_install(url_prefix, packages):
         sudo('dpkg -i {package}'.format(package=package))
 
     with cd(get_tempdir_fab()):
-        return map(one, packages)
+        return tuple(imap(one, packages))
