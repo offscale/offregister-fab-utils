@@ -2,7 +2,9 @@ from fabric.api import run, settings, sudo
 
 
 def get_tempdir_fab(run_command=run, **kwargs):
-    return run("python -c 'from tempfile import gettempdir; print gettempdir()'", **kwargs)
+    return (lambda r: '/tmp' if r.failed else r)(
+        run_command("python -c 'from tempfile import gettempdir; print gettempdir()'",
+                    quiet=True, warn_only=True, **kwargs))
 
 
 def append_path(new_path):
@@ -18,3 +20,7 @@ def append_path(new_path):
 
 def cmd_avail(cmd):
     return run('command -v "{cmd}"'.format(cmd=cmd), warn_only=True, quiet=True).succeeded
+
+
+def version_avail(cmd, version, kwarg='--version'):
+    return run('{cmd} {kwarg}'.format(cmd=cmd, kwarg=kwarg), quiet=True, warn_only=True).value == version
