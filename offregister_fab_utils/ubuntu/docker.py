@@ -14,9 +14,11 @@ def install_0():
     run('apt-cache policy docker-engine')
     apt_depends('linux-image-extra-{uname}'.format(uname=run('uname -r')), 'docker-engine')
 
+
 def dockeruser_1(user='ubuntu'):
     sudo('groupadd docker')
     sudo('usermod -aG docker {user}'.format(user=user))
+
 
 def serve_2():
     sudo('service docker start')
