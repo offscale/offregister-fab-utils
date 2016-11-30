@@ -7,6 +7,14 @@ from fabric.operations import run, sudo
 
 def clone_or_update(repo, branch='stable', remote='origin', team='offscale',
                     skip_checkout=False, skip_reset=False, to_dir=None, use_sudo=False):
+    # TODO: Properly parse the URL
+    if repo[:len('http')] in frozenset(('http', 'ssh:')):
+        team, _, repo = repo.rpartition('/')
+        team = team[team.rfind('/') + 1:]
+        rf = repo.rfind('.git')
+        if rf > -1:
+            repo = repo[:rf]
+
     to_dir = to_dir or repo
     func = sudo if use_sudo else run
     if exists(to_dir, use_sudo=use_sudo):
