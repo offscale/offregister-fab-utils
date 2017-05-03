@@ -57,7 +57,7 @@ def get_pretty_name():
     with prefix('source /etc/os-release'):
         name = run('echo ${VERSION/*, /} | { read f _ ; echo "${f,,}"; }')
         if name.startswith('1'):
-            name = run('$UBUNTU_CODENAME')
+            name = run('echo $UBUNTU_CODENAME')
 
     if not name:
         raise ValueError('name not set')
