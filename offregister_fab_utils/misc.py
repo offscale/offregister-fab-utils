@@ -64,3 +64,15 @@ def fab_steps(module):
 
     """
     return tuple(getattr(module, func) for func in get_sorted_strnum(dir(module)))
+
+
+def timeout(duration, cmd):
+    """
+    :param duration: The duration of time to await the completion of the command before force exiting,
+           e.g.: '120s' for 2 minutes
+    :type duration: ``str``
+    
+    :return: string to be executed containing bash sub
+    :rtype: ``str``
+    """
+    return '( cmdpid=$BASHPID; (sleep {duration}; kill $cmdpid) & exec {cmd} )'.format(duration=duration, cmd=cmd)
