@@ -1,7 +1,11 @@
+from collections import namedtuple
 from itertools import imap
+from tempfile import gettempdir
 
 from fabric.api import local, sudo
+from fabric.operations import get
 from offutils import get_sorted_strnum
+from os import path
 
 from offregister_fab_utils.ubuntu.version import ubuntu_version
 import operator
@@ -76,3 +80,11 @@ def timeout(duration, cmd):
     :rtype: ``str``
     """
     return '( cmdpid=$BASHPID; (sleep {duration}; kill $cmdpid) & exec {cmd} )'.format(duration=duration, cmd=cmd)
+
+
+def get_load_remote_file(directory, filename, use_sudo=True, load_f=lambda ident: ident, sep='/'):
+    remote_path = '{directory}{sep}{filename}'.format(directory=directory, sep=sep, filename=filename)
+    tmpdir = gettempdir()
+    get(local_path=tmpdir, remote_path=remote_path, use_sudo=use_sudo)
+    with open(path.join(tmpdir, filename)) as f:
+        return namedtuple('_', ('remote_path', 'content'))(remote_path, load_f(f))
