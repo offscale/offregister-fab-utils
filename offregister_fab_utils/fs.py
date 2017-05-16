@@ -1,4 +1,4 @@
-from fabric.api import run, settings, sudo
+from fabric.api import run, sudo
 
 
 def get_tempdir_fab(run_command=run, **kwargs):
@@ -7,17 +7,14 @@ def get_tempdir_fab(run_command=run, **kwargs):
                     quiet=True, warn_only=True, **kwargs))
 
 
-def append_path(new_path):
-    return append_str('/etc/environment', new_path)
-
-
-def append_str(filename, new_str, use_sudo=True):
-    installed = run('grep -q {new_str} {filename}'.format(filename=filename, new_str=new_str),
-                    warn_only=True, quiet=True, use_sudo=use_sudo)
+def append_path(new_path, use_sudo=True):
+    filename = '/etc/environment'
+    installed = run('grep -q {new_path} {filename}'.format(filename=filename, new_path=new_path),
+                    warn_only=True, quiet=True)
 
     if installed.failed:
-        sudo('''sed -e '/^PATH/s/"$/:{new_str}"/g' -i {filename}'''.format(
-            new_str=new_str.replace('/', '\/'), filename=filename, use_sudo=use_sudo
+        sudo('''sed -e '/^PATH/s/"$/:{new_path}"/g' -i {filename}'''.format(
+            new_path=new_path.replace('/', '\/'), filename=filename, use_sudo=use_sudo
         ))
 
 

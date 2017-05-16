@@ -1,6 +1,6 @@
 from collections import namedtuple
 from itertools import imap
-from tempfile import gettempdir
+from tempfile import mkdtemp
 
 from fabric.api import local, sudo
 from fabric.operations import get
@@ -84,7 +84,7 @@ def timeout(duration, cmd):
 
 def get_load_remote_file(directory, filename, use_sudo=True, load_f=lambda ident: ident, sep='/'):
     remote_path = '{directory}{sep}{filename}'.format(directory=directory, sep=sep, filename=filename)
-    tmpdir = gettempdir()
+    tmpdir = mkdtemp(prefix='offregister')
     get(local_path=tmpdir, remote_path=remote_path, use_sudo=use_sudo)
     with open(path.join(tmpdir, filename)) as f:
         return namedtuple('_', ('remote_path', 'content'))(remote_path, load_f(f))
