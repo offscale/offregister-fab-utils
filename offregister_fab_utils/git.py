@@ -24,6 +24,7 @@ def clone_or_update(repo, branch='stable', remote='origin', team='offscale',
                 func('git checkout -f {branch}'.format(branch=branch))
             if not skip_reset:
                 func('git reset --hard {remote}/{branch}'.format(remote=remote, branch=branch))
+            func('git merge FETCH_HEAD')
         return 'updated'
     else:
         func('git clone https://github.com/{team}/{repo}.git {to_dir}'.format(team=team, repo=repo, to_dir=to_dir))
