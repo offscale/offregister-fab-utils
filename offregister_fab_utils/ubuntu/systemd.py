@@ -1,4 +1,8 @@
+from os import path
+from pkg_resources import resource_filename
+
 from fabric.api import sudo
+from fabric.contrib.files import upload_template
 
 
 def restart_systemd(service_name):
@@ -11,3 +15,16 @@ def restart_systemd(service_name):
         sudo('systemctl start -q {service_name} --no-pager --full'.format(service_name=service_name))
 
     return sudo('systemctl status {service_name} --no-pager --full'.format(service_name=service_name))
+
+
+def install_upgrade_service(service_name, context, conf_local_filepath=None):
+    conf_local_filepath = conf_local_filepath or resource_filename('offregister_fab_utils',
+                                                                   path.join('configs', 'systemd.conf'))
+    conf_remote_filename = '/lib/systemd/system/{service_name}.service'.format(service_name=service_name)
+    upload_template(conf_local_filepath, conf_remote_filename,
+                    context={'ExecStart': context['ExecStart'], 'Environments': context['Environments'],
+                             'WorkingDirectory': context['WorkingDirectory'],
+                             'User': context['User'], 'Group': context['Group'],
+                             'service_name': service_name},
+                    use_sudo=True, backup=False)
+    return restart_systemd(service_name)
