@@ -17,7 +17,7 @@ def clone_or_update(repo, branch='stable', remote='origin', team='offscale',
 
     to_dir = to_dir or repo
     func = sudo if use_sudo else run
-    if exists(to_dir, use_sudo=use_sudo):
+    if exists('{to_dir}/.git'.format(to_dir=to_dir), use_sudo=use_sudo):
         with cd(to_dir):
             func('git fetch')
             if not skip_checkout:
