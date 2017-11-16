@@ -6,7 +6,8 @@ from fabric.operations import run, sudo
 
 
 def clone_or_update(repo, branch='stable', remote='origin', team='offscale',
-                    skip_checkout=False, skip_reset=False, to_dir=None, use_sudo=False):
+                    skip_checkout=False, skip_reset=False, to_dir=None, use_sudo=False,
+                    cmd_runner=None):
     # TODO: Properly parse the URL
     if repo[:len('http')] in frozenset(('http', 'ssh:')):
         team, _, repo = repo.rpartition('/')
@@ -16,7 +17,7 @@ def clone_or_update(repo, branch='stable', remote='origin', team='offscale',
             repo = repo[:rf]
 
     to_dir = to_dir or repo
-    func = sudo if use_sudo else run
+    func = cmd_runner if cmd_runner is not None else sudo if use_sudo else run
     if exists('{to_dir}/.git'.format(to_dir=to_dir), use_sudo=use_sudo):
         with cd(to_dir):
             func('git fetch')

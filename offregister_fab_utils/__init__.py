@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
 __author__ = 'Samuel Marks'
-__version__ = '0.0.10'
+__version__ = '0.0.11'
 
 skip_apt_update = False
