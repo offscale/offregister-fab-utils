@@ -28,3 +28,9 @@ def install_upgrade_service(service_name, context, conf_local_filepath=None):
                              'service_name': service_name},
                     use_sudo=True, backup=False)
     return restart_systemd(service_name)
+
+
+def disable_service(service):
+    if sudo('systemctl is-active --quiet {service}'.format(service=service), warn_only=True).succeeded:
+        sudo('systemctl stop {service}'.format(service=service))
+        sudo('sudo systemctl disable {service}'.format(service=service))
