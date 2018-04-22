@@ -17,21 +17,24 @@ def clone_or_update(repo, branch='stable', remote='origin', team='offscale',
             repo = repo[:rf]
 
     to_dir = to_dir or repo
-    func = cmd_runner if cmd_runner is not None else sudo if use_sudo else run
+    cmd_runner = cmd_runner if cmd_runner is not None else sudo if use_sudo else run
     if exists('{to_dir}/.git'.format(to_dir=to_dir), use_sudo=use_sudo):
         with cd(to_dir):
-            func('git fetch')
+            cmd_runner('git fetch')
             if not skip_checkout:
-                func('git checkout -f {branch}'.format(branch=branch))
+                cmd_runner('git checkout -f {branch}'.format(branch=branch))
             if not skip_reset:
-                func('git reset --hard {remote}/{branch}'.format(remote=remote, branch=branch))
-            func('git merge FETCH_HEAD')
+                cmd_runner('git reset --hard {remote}/{branch}'.format(remote=remote, branch=branch))
+            cmd_runner('git merge FETCH_HEAD')
         return 'updated'
     else:
-        func('git clone https://github.com/{team}/{repo}.git {to_dir}'.format(team=team, repo=repo, to_dir=to_dir))
+        cmd_runner('mkdir -p {to_dir}'.format(to_dir=to_dir))
+        cmd_runner('git clone https://github.com/{team}/{repo}.git {to_dir}'.format(
+            team=team, repo=repo, to_dir=to_dir
+        ))
         with cd(to_dir):
             if not skip_checkout:
-                func('git checkout -f {branch}'.format(branch=branch))
+                cmd_runner('git checkout -f {branch}'.format(branch=branch))
         return 'cloned'
 
 
