@@ -6,8 +6,8 @@ from fabric.operations import run, sudo
 
 
 def clone_or_update(repo, branch='stable', remote='origin', team='offscale',
-                    skip_checkout=False, skip_reset=False, to_dir=None, use_sudo=False,
-                    cmd_runner=None):
+                    skip_checkout=False, skip_reset=False, skip_clean=True, to_dir=None, use_sudo=False,
+                    cmd_runner=None, reset_to_first=False):
     # TODO: Properly parse the URL
     if repo[:len('http')] in frozenset(('http', 'ssh:')):
         team, _, repo = repo.rpartition('/')
@@ -23,8 +23,14 @@ def clone_or_update(repo, branch='stable', remote='origin', team='offscale',
             cmd_runner('git fetch')
             if not skip_checkout:
                 cmd_runner('git checkout -f {branch}'.format(branch=branch))
+            if not skip_clean:
+                cmd_runner('git clean -fd')
             if not skip_reset:
                 cmd_runner('git reset --hard {remote}/{branch}'.format(remote=remote, branch=branch))
+                if reset_to_first:
+                    cmd_runner('git reset --hard $(git rev-list --max-parents=0 --abbrev-commit HEAD)')
+                    cmd_runner('git pull')
+                    return 'updated'
             cmd_runner('git merge FETCH_HEAD')
         return 'updated'
     else:
