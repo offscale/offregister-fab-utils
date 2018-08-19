@@ -5,7 +5,7 @@ from collections import namedtuple
 from functools import partial
 from itertools import imap
 from tempfile import mkdtemp
-from os import path, os
+from os import path
 
 from fabric.api import run, sudo, hide, settings, env, put, abort, get
 from fabric.contrib.files import _expand_path, exists
