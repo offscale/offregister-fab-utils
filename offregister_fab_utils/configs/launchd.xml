@@ -5,7 +5,7 @@
         <key>Label</key>
         <string>%(LABEL)s</string>
         <key>Program</key>
-        <string>%(PROGRAM)s</string>
+            <string>%(PROGRAM)s</string>
         <key>RunAtLoad</key>
         <true/>
     </dict>

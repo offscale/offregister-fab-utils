@@ -1,10 +1,9 @@
 from os import path
 from sys import modules
 
-from pkg_resources import resource_filename
-
 from fabric.api import sudo
 from fabric.contrib.files import upload_template
+from pkg_resources import resource_filename
 
 
 def restart_systemd(service_name):
@@ -20,8 +19,8 @@ def restart_systemd(service_name):
 
 
 def install_upgrade_service(service_name, context, conf_local_filepath=None):
-    conf_local_filepath = conf_local_filepath or resource_filename(modules[__name__].__name__,
-                                                                   path.join('configs', 'systemd.conf'))
+    conf_local_filepath = conf_local_filepath or resource_filename(
+        modules[__name__].__name__.rpartition('.')[0].rpartition('.')[0], path.join('configs', 'systemd.conf'))
     conf_remote_filename = '/lib/systemd/system/{service_name}.service'.format(service_name=service_name)
     upload_template(conf_local_filepath, conf_remote_filename,
                     context={'ExecStart': context['ExecStart'], 'Environments': context['Environments'],
