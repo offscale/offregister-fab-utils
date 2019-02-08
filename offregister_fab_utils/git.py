@@ -5,7 +5,7 @@ from fabric.contrib.files import exists
 from fabric.operations import run, sudo
 
 
-def clone_or_update(repo, branch='stable', remote='origin', team='offscale',
+def clone_or_update(repo, branch='stable', remote='origin', team='offscale', tag=None,
                     skip_checkout=False, skip_reset=False, skip_clean=True, to_dir=None, use_sudo=False,
                     cmd_runner=None, reset_to_first=False):
     # TODO: Properly parse the URL
@@ -20,9 +20,11 @@ def clone_or_update(repo, branch='stable', remote='origin', team='offscale',
     cmd_runner = cmd_runner if cmd_runner is not None else sudo if use_sudo else run
     if exists('{to_dir}/.git'.format(to_dir=to_dir), use_sudo=use_sudo):
         with cd(to_dir):
-            cmd_runner('git fetch')
             if not skip_checkout:
-                cmd_runner('git checkout -f {branch}'.format(branch=branch))
+                cmd_runner('git fetch {remote} {branch} && git checkout {remote}/{branch}'.format(branch=branch,
+                                                                                                  remote=remote))
+            if tag is not None:
+                cmd_runner('git fetch --all --tags --prune && git checkout tags/{tag} -b <branch_name>')
             if not skip_clean:
                 cmd_runner('git clean -fd')
             if not skip_reset:
