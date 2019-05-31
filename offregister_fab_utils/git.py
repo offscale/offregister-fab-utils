@@ -5,9 +5,10 @@ from fabric.contrib.files import exists
 from fabric.operations import run, sudo
 
 
-def clone_or_update(repo, branch='stable', remote='origin', team='offscale', tag=None,
-                    skip_checkout=False, skip_reset=False, skip_clean=True, to_dir=None, use_sudo=False,
-                    cmd_runner=None, reset_to_first=False):
+def clone_or_update(repo, branch='stable', remote='origin', team='offscale',
+                    tag=None, skip_checkout=False, skip_reset=False,
+                    skip_clean=True, to_dir=None, depth=None,
+                    use_sudo=False, cmd_runner=None, reset_to_first=False):
     # TODO: Properly parse the URL
     if repo[:len('http')] in frozenset(('http', 'ssh:')):
         team, _, repo = repo.rpartition('/')
@@ -37,8 +38,8 @@ def clone_or_update(repo, branch='stable', remote='origin', team='offscale', tag
         return 'updated'
     else:
         cmd_runner('mkdir -p {to_dir}'.format(to_dir=to_dir))
-        cmd_runner('git clone https://github.com/{team}/{repo}.git {to_dir}'.format(
-            team=team, repo=repo, to_dir=to_dir
+        cmd_runner('git clone https://github.com/{team}/{repo}.git {to_dir} {depth}'.format(
+            team=team, repo=repo, to_dir=to_dir, depth='' if depth is None else '--depth={depth}'.format(depth=depth)
         ))
         with cd(to_dir):
             if not skip_checkout:
