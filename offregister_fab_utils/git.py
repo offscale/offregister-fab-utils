@@ -34,7 +34,7 @@ def clone_or_update(repo, branch='stable', remote='origin', team='offscale',
                     cmd_runner('git reset --hard $(git rev-list --max-parents=0 --abbrev-commit HEAD)')
                     cmd_runner('git pull')
                     return 'updated'
-            cmd_runner('git merge FETCH_HEAD')
+            cmd_runner('git merge FETCH_HEAD', warn_only=True)
         return 'updated'
     else:
         cmd_runner('mkdir -p {to_dir}'.format(to_dir=to_dir))
