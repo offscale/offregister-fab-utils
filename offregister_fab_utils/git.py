@@ -21,13 +21,14 @@ def clone_or_update(repo, branch='stable', remote='origin', team='offscale',
     cmd_runner = cmd_runner if cmd_runner is not None else sudo if use_sudo else run
     if exists('{to_dir}/.git'.format(to_dir=to_dir), use_sudo=use_sudo):
         with cd(to_dir):
+            if not skip_clean:
+                cmd_runner('git clean -fd')
+
             if not skip_checkout:
                 cmd_runner('git fetch {remote} {branch} && git checkout {remote}/{branch}'.format(branch=branch,
                                                                                                   remote=remote))
             if tag is not None:
                 cmd_runner('git fetch --all --tags --prune && git checkout tags/{tag} -b <branch_name>')
-            if not skip_clean:
-                cmd_runner('git clean -fd')
             if not skip_reset:
                 cmd_runner('git reset --hard {remote}/{branch}'.format(remote=remote, branch=branch))
                 if reset_to_first:
