@@ -35,7 +35,7 @@ def clone_or_update(repo, branch='stable', remote='origin', team='offscale',
                 cmd_runner('git fetch {remote} {branch} && git checkout {remote}/{branch}'.format(branch=branch,
                                                                                                   remote=remote))
             if tag is not None:
-                cmd_runner('git fetch --all --tags --prune && git checkout tags/{tag} -b <branch_name>')
+                cmd_runner('git fetch --all --tags --prune && git checkout tags/{tag}'.format(tag=tag))
 
             cmd_runner('git merge FETCH_HEAD', warn_only=True)
         return 'updated'
