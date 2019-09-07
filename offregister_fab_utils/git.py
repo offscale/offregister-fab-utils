@@ -47,6 +47,9 @@ def clone_or_update(repo, branch='stable', remote='origin', team='offscale',
         with cd(to_dir):
             if not skip_checkout:
                 cmd_runner('git checkout -f {branch}'.format(branch=branch))
+            if tag is not None:
+                cmd_runner('git fetch --all --tags --prune && git checkout tags/{tag}'.format(tag=tag))
+
         return 'cloned'
 
 
