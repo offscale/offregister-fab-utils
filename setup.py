@@ -36,6 +36,7 @@ if __name__ == '__main__':
             'Programming Language :: Python :: 2.7',
             'Programming Language :: Python :: 2 :: Only'
         ],
+        install_requires=['pyyaml', 'fab-classic', 'paramiko'],
         test_suite=package_name + '.tests',
         packages=find_packages(),
         package_dir={package_name: package_name},

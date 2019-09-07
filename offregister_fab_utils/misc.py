@@ -1,14 +1,14 @@
 import operator
-
-from StringIO import StringIO
+import os
 from collections import namedtuple
 from functools import partial
 from itertools import imap
-from tempfile import mkdtemp
 from os import path
+from tempfile import mkdtemp
 
+import six
 from fabric.api import run, sudo, hide, settings, env, put, abort, get
-from fabric.contrib.files import _expand_path, exists
+from fabric.contrib.files import exists
 from fabric.utils import apply_lcwd
 from offutils import get_sorted_strnum
 
@@ -146,7 +146,7 @@ def upload_template_fmt(filename, destination, context=None, use_jinja=False, us
         func = partial(func, pty=pty)
     # Normalize destination to be an actual filename, due to using StringIO
     with settings(hide('everything'), warn_only=True):
-        if func('test -d %s' % _expand_path(destination)).succeeded:
+        if func('test -d %s' % destination.replace(' ', r'\ ')).succeeded:
             sep = "" if destination.endswith('/') else "/"
             destination += sep + os.path.basename(filename)
 
@@ -185,18 +185,17 @@ def upload_template_fmt(filename, destination, context=None, use_jinja=False, us
         if context:
             text = text.format(**context) if use_fmt else text % context
 
-        # Force to a byte representation of Unicode, or str()ification
-        # within Paramiko's SFTP machinery may cause decode issues for
-        # truly non-ASCII characters.
-        text = text.encode('utf-8')
-
     # Back up original file
     if backup and exists(destination):
-        func("cp %s{,.bak}" % _expand_path(destination))
+        target = destination.replace(' ', r'\ ')
+        func("cp %s %s.bak" % (target, target))
+
+    if six.PY3 is True and isinstance(text, bytes):
+        text = text.decode('utf-8')
 
     # Upload the file.
     return put(
-        local_path=StringIO(text),
+        local_path=six.StringIO(text),
         remote_path=destination,
         use_sudo=use_sudo,
         mirror_local_mode=mirror_local_mode,
