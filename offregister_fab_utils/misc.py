@@ -2,7 +2,13 @@ import operator
 import os
 from collections import namedtuple
 from functools import partial
-from itertools import imap
+from platform import python_version_tuple
+
+if python_version_tuple()[0] == '2':
+    from itertools import imap
+else:
+    imap = map
+
 from os import path
 from tempfile import mkdtemp
 
@@ -202,3 +208,12 @@ def upload_template_fmt(filename, destination, context=None, use_jinja=False, us
         mode=mode,
         temp_dir=temp_dir
     )
+
+
+def get_user_group_tuples(user):
+    """
+    :param user: user
+    :return: unroll with `(uid, user), (gid, group) = get_user_group_tuples('myusername')`
+    """
+    return imap(lambda s: (lambda p: (int(p[0]), p[2][:-1]))(s.partition('=')[2].partition('(')),
+                run('id {user}'.format(user=user)).split(' ')[:2])
