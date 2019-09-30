@@ -47,9 +47,10 @@ def pip_depends(python=None, use_sudo=False, *packages):
     more_to_install = is_not_installed(python, use_sudo, *packages)
     if not more_to_install:
         return None
-    print('more_to_install:', more_to_install)
-    return _run_command('{python} -m pip install {packages}'.format(
-        python=python,
-        packages=' '.join(pkg.name if isinstance(pkg, Package)
-                          else pkg for pkg in more_to_install))
+    return _run_command(
+        '{python} -m pip install {packages}'.format(
+            python=python,
+            packages=' '.join(pkg.name if isinstance(pkg, Package)
+                              else pkg for pkg in more_to_install)),
+        sudo=use_sudo
     )
