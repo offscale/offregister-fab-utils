@@ -5,7 +5,7 @@ from functools import partial
 from platform import python_version_tuple
 
 if python_version_tuple()[0] == '2':
-    from itertools import imap
+    
 else:
     imap = map
 
@@ -23,7 +23,7 @@ from offregister_fab_utils.ubuntu.version import ubuntu_version
 
 def process_funcs(*funcs):
     def process(*args, **kwargs):
-        return dict(imap(lambda g: ((g.__module__, g.__name__), g(*args, **kwargs)), funcs)) if len(funcs) else {}
+        return dict(map(lambda g: ((g.__module__, g.__name__), g(*args, **kwargs)), funcs)) if len(funcs) else {}
 
     return process
 
@@ -47,7 +47,7 @@ def require_os_version(expected_version, op=operator.eq):
         expected_version = float(expected_version)
 
     if next((oper for oper in dir(operator) if oper in (op.__name__, '__{}__'.format(op.__name__))), None) is None:
-        raise TypeError, '{op.__name__} not in operators'.format(op=op)
+        raise TypeError('{op.__name__} not in operators'.format(op=op))
 
     def wrap(f):
         def check(cache, *args, **kwargs):
@@ -215,5 +215,5 @@ def get_user_group_tuples(user):
     :param user: user
     :return: unroll with `(uid, user), (gid, group) = get_user_group_tuples('myusername')`
     """
-    return imap(lambda s: (lambda p: (int(p[0]), p[2][:-1]))(s.partition('=')[2].partition('(')),
+    return map(lambda s: (lambda p: (int(p[0]), p[2][:-1]))(s.partition('=')[2].partition('(')),
                 run('id {user}'.format(user=user)).split(' ')[:2])
