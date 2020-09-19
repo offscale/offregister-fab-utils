@@ -1,14 +1,4 @@
-
-
-from platform import python_version_tuple
-
 from offregister_fab_utils.apt import Package
-
-if python_version_tuple()[0] == "2":
-    
-else:
-    imap = map
-    ifilter = filter
 
 from fabric.operations import _run_command
 

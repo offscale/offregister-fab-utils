@@ -1,14 +1,8 @@
 import operator
 import os
+
 from collections import namedtuple
 from functools import partial
-from platform import python_version_tuple
-
-if python_version_tuple()[0] == '2':
-    
-else:
-    imap = map
-
 from os import path
 from tempfile import mkdtemp
 
@@ -23,7 +17,11 @@ from offregister_fab_utils.ubuntu.version import ubuntu_version
 
 def process_funcs(*funcs):
     def process(*args, **kwargs):
-        return dict(map(lambda g: ((g.__module__, g.__name__), g(*args, **kwargs)), funcs)) if len(funcs) else {}
+        return (
+            dict(map(lambda g: ((g.__module__, g.__name__), g(*args, **kwargs)), funcs))
+            if len(funcs)
+            else {}
+        )
 
     return process
 
@@ -31,10 +29,12 @@ def process_funcs(*funcs):
 def merge_funcs(*funcs):
     def outer(f):
         def inner(cache, *args, **kwargs):
-            if '_merge' not in cache:
-                cache['_merge'] = process_funcs(*funcs)(cache=cache, *args, **kwargs)
+            if "_merge" not in cache:
+                cache["_merge"] = process_funcs(*funcs)(cache=cache, *args, **kwargs)
             else:
-                cache['_merge'].update(process_funcs(*funcs)(cache=cache, *args, **kwargs))
+                cache["_merge"].update(
+                    process_funcs(*funcs)(cache=cache, *args, **kwargs)
+                )
             return f(cache=cache, *args, **kwargs)
 
         return inner
@@ -46,17 +46,31 @@ def require_os_version(expected_version, op=operator.eq):
     if type(expected_version) is not float:
         expected_version = float(expected_version)
 
-    if next((oper for oper in dir(operator) if oper in (op.__name__, '__{}__'.format(op.__name__))), None) is None:
-        raise TypeError('{op.__name__} not in operators'.format(op=op))
+    if (
+        next(
+            (
+                oper
+                for oper in dir(operator)
+                if oper in (op.__name__, "__{}__".format(op.__name__))
+            ),
+            None,
+        )
+        is None
+    ):
+        raise TypeError("{op.__name__} not in operators".format(op=op))
 
     def wrap(f):
         def check(cache, *args, **kwargs):
-            os_version = cache['os_version'] if 'os_version' in cache else ubuntu_version()
+            os_version = (
+                cache["os_version"] if "os_version" in cache else ubuntu_version()
+            )
             # TODO: check OS type                                          ^
-            assert op(os_version, expected_version), '{os_version!r} not {op.__name__} {expected_version}'.format(
+            assert op(
+                os_version, expected_version
+            ), "{os_version!r} not {op.__name__} {expected_version}".format(
                 os_version=os_version, op=op, expected_version=expected_version
             )
-            cache['os_version'] = os_version
+            cache["os_version"] = os_version
             return f(cache=cache, *args, **kwargs)
 
         return check
@@ -85,24 +99,42 @@ def timeout(duration, cmd):
     :param duration: The duration of time to await the completion of the command before force exiting,
            e.g.: '120s' for 2 minutes
     :type duration: ``str``
-    
+
     :return: string to be executed containing bash sub
     :rtype: ``str``
     """
-    return '( cmdpid=$BASHPID; (sleep {duration}; kill $cmdpid) & exec {cmd} )'.format(duration=duration, cmd=cmd)
+    return "( cmdpid=$BASHPID; (sleep {duration}; kill $cmdpid) & exec {cmd} )".format(
+        duration=duration, cmd=cmd
+    )
 
 
-def get_load_remote_file(directory, filename, use_sudo=True, load_f=lambda ident: ident, sep='/'):
-    remote_path = '{directory}{sep}{filename}'.format(directory=directory, sep=sep, filename=filename)
-    tmpdir = mkdtemp(prefix='offregister')
+def get_load_remote_file(
+    directory, filename, use_sudo=True, load_f=lambda ident: ident, sep="/"
+):
+    remote_path = "{directory}{sep}{filename}".format(
+        directory=directory, sep=sep, filename=filename
+    )
+    tmpdir = mkdtemp(prefix="offregister")
     get(local_path=tmpdir, remote_path=remote_path, use_sudo=use_sudo)
     with open(path.join(tmpdir, filename)) as f:
-        return namedtuple('_', ('remote_path', 'content'))(remote_path, load_f(f))
+        return namedtuple("_", ("remote_path", "content"))(remote_path, load_f(f))
 
 
-def upload_template_fmt(filename, destination, context=None, use_jinja=False, use_fmt=False,
-                        template_dir=None, use_sudo=False, backup=True, mirror_local_mode=False,
-                        mode=None, pty=None, keep_trailing_newline=False, temp_dir=''):
+def upload_template_fmt(
+    filename,
+    destination,
+    context=None,
+    use_jinja=False,
+    use_fmt=False,
+    template_dir=None,
+    use_sudo=False,
+    backup=True,
+    mirror_local_mode=False,
+    mode=None,
+    pty=None,
+    keep_trailing_newline=False,
+    temp_dir="",
+):
     """
     Render and upload a template text file to a remote host.
 
@@ -151,9 +183,9 @@ def upload_template_fmt(filename, destination, context=None, use_jinja=False, us
     if pty is not None:
         func = partial(func, pty=pty)
     # Normalize destination to be an actual filename, due to using StringIO
-    with settings(hide('everything'), warn_only=True):
-        if func('test -d %s' % destination.replace(' ', r'\ ')).succeeded:
-            sep = "" if destination.endswith('/') else "/"
+    with settings(hide("everything"), warn_only=True):
+        if func("test -d %s" % destination.replace(" ", r"\ ")).succeeded:
+            sep = "" if destination.endswith("/") else "/"
             destination += sep + os.path.basename(filename)
 
     # Use mode kwarg to implement mirror_local_mode, again due to using
@@ -171,15 +203,19 @@ def upload_template_fmt(filename, destination, context=None, use_jinja=False, us
             template_dir = template_dir or os.getcwd()
             template_dir = apply_lcwd(template_dir, env)
             from jinja2 import Environment, FileSystemLoader
-            jenv = Environment(loader=FileSystemLoader(template_dir),
-                               keep_trailing_newline=keep_trailing_newline)
+
+            jenv = Environment(
+                loader=FileSystemLoader(template_dir),
+                keep_trailing_newline=keep_trailing_newline,
+            )
             text = jenv.get_template(filename).render(**context or {})
             # Force to a byte representation of Unicode, or str()ification
             # within Paramiko's SFTP machinery may cause decode issues for
             # truly non-ASCII characters.
-            text = text.encode('utf-8')
+            text = text.encode("utf-8")
         except ImportError:
             import traceback
+
             tb = traceback.format_exc()
             abort(tb + "\nUnable to import Jinja2 -- see above.")
     else:
@@ -193,11 +229,11 @@ def upload_template_fmt(filename, destination, context=None, use_jinja=False, us
 
     # Back up original file
     if backup and exists(destination):
-        target = destination.replace(' ', r'\ ')
+        target = destination.replace(" ", r"\ ")
         func("cp %s %s.bak" % (target, target))
 
     if six.PY3 is True and isinstance(text, bytes):
-        text = text.decode('utf-8')
+        text = text.decode("utf-8")
 
     # Upload the file.
     return put(
@@ -206,7 +242,7 @@ def upload_template_fmt(filename, destination, context=None, use_jinja=False, us
         use_sudo=use_sudo,
         mirror_local_mode=mirror_local_mode,
         mode=mode,
-        temp_dir=temp_dir
+        temp_dir=temp_dir,
     )
 
 
@@ -215,5 +251,9 @@ def get_user_group_tuples(user):
     :param user: user
     :return: unroll with `(uid, user), (gid, group) = get_user_group_tuples('myusername')`
     """
-    return map(lambda s: (lambda p: (int(p[0]), p[2][:-1]))(s.partition('=')[2].partition('(')),
-                run('id {user}'.format(user=user)).split(' ')[:2])
+    return map(
+        lambda s: (lambda p: (int(p[0]), p[2][:-1]))(
+            s.partition("=")[2].partition("(")
+        ),
+        run("id {user}".format(user=user)).split(" ")[:2],
+    )
