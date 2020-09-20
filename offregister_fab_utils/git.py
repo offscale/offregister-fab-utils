@@ -1,5 +1,3 @@
-from types import DictType
-
 from fabric.context_managers import cd
 from fabric.contrib.files import exists
 from fabric.operations import run, sudo
@@ -86,7 +84,7 @@ def clone_or_update(
 
 
 def url_to_git_dict(static_git_url):
-    if type(static_git_url) is DictType:
+    if isinstance(type(static_git_url), dict):
         requires_set = frozenset(("repo", "team", "branch"))
         given_keys_set = frozenset(list(static_git_url.keys()))
         if not len(given_keys_set.difference(requires_set)):
