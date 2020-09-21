@@ -8,7 +8,6 @@ from offregister_fab_utils.apt import Package
 from fabric.operations import _run_command
 
 
-
 def _cleanup_pkg_name(pkg):  # type: (str) -> str
     pkg = pkg.partition("[")[0]
     apache_s = "apache-"
