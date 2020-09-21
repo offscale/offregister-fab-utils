@@ -4,9 +4,14 @@ import os
 from collections import namedtuple
 from functools import partial
 from os import path
+from sys import version
 from tempfile import mkdtemp
 
 import six
+
+if version[0] == "2":
+    from itertools import imap as map
+
 from fabric.api import run, sudo, hide, settings, env, put, abort, get
 from fabric.contrib.files import exists
 from fabric.utils import apply_lcwd

@@ -1,7 +1,12 @@
-from itertools import filterfalse
 from functools import partial
 from operator import is_
 from collections import namedtuple
+from sys import version
+
+if version[0] == "2":
+    from itertools import imap as map, ifilterfalse as filterfalse
+else:
+    from itertools import filterfalse
 
 from fabric.api import run, sudo, cd
 
