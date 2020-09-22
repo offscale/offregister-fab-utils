@@ -24,24 +24,22 @@ def is_installed(*packages):
     return tuple(
         filterfalse(
             partial(is_, True),
-            list(
-                map(
-                    lambda package: (
-                        run(
-                            "rpm -q --queryformat '%{VERSION}' "
-                            + "{}".format(package.name),
-                            warn_only=True,
-                        ).startswith(package.version)
-                        if isinstance(package, Package)
-                        else run(
-                            "rpm -q {package}".format(package=package),
-                            quiet=True,
-                            warn_only=True,
-                        ).succeeded
-                    )
-                    or package,
-                    packages,
+            map(
+                lambda package: (
+                    run(
+                        "rpm -q --queryformat '%{VERSION}' "
+                        + "{}".format(package.name),
+                        warn_only=True,
+                    ).startswith(package.version)
+                    if isinstance(package, Package)
+                    else run(
+                        "rpm -q {package}".format(package=package),
+                        quiet=True,
+                        warn_only=True,
+                    ).succeeded
                 )
+                or package,
+                packages,
             ),
         )
     )

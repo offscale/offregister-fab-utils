@@ -2,6 +2,8 @@ from fabric.context_managers import cd
 from fabric.contrib.files import exists
 from fabric.operations import run, sudo
 
+from offutils.util import iterkeys
+
 
 def clone_or_update(
     repo,
@@ -86,7 +88,7 @@ def clone_or_update(
 def url_to_git_dict(static_git_url):
     if isinstance(type(static_git_url), dict):
         requires_set = frozenset(("repo", "team", "branch"))
-        given_keys_set = frozenset(list(static_git_url.keys()))
+        given_keys_set = frozenset(iterkeys(static_git_url))
         if not len(given_keys_set.difference(requires_set)):
             raise ValueError(
                 "{given_keys_set} must contain {requires_set}".format(
