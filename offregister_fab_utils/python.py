@@ -3,12 +3,14 @@ from sys import version
 if version[0] == "2":
     from itertools import imap as map, ifilter as filter
 
-from offregister_fab_utils.apt import Package
+from offregister_fab_utils import Package
 
 from fabric.operations import _run_command
 
 
 def _cleanup_pkg_name(pkg):  # type: (str) -> str
+    if isinstance(pkg, Package):
+        pkg = pkg.name
     pkg = pkg.partition("[")[0]
     apache_s = "apache-"
     apache = pkg.startswith(apache_s)
@@ -53,7 +55,8 @@ def pip_depends(python=None, use_sudo=False, *packages):
         "{python} -m pip install {packages}".format(
             python=python,
             packages=" ".join(
-                pkg.name if isinstance(pkg, Package) else pkg for pkg in more_to_install
+                "==".join((pkg.name, pkg.version)) if isinstance(pkg, Package) else pkg
+                for pkg in more_to_install
             ),
         ),
         sudo=use_sudo,

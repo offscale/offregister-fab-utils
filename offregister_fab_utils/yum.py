@@ -1,6 +1,5 @@
 from functools import partial
 from operator import is_
-from collections import namedtuple
 from sys import version
 
 if version[0] == "2":
@@ -12,14 +11,16 @@ from fabric.api import run, sudo, cd
 
 from offregister_fab_utils import skip_yum_update
 from offregister_fab_utils.fs import get_tempdir_fab
-
-Package = namedtuple("Package", ("name", "version"))
+from offregister_fab_utils import Package
 
 
 def is_installed(*packages):
     """
-    :param package-name strings or Package :type splat
-    :return: packages which need installed :type tuple
+    :param packages: ```Union[str, Package]```
+    :type packages: ```Tuple[Union[str, Package]]```
+
+    :return: packages which need installed
+    :rtype: ```Tuple[Union[str, Package]]```
     """ ""
     return tuple(
         filterfalse(
