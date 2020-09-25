@@ -12,6 +12,7 @@ from fabric.context_managers import prefix
 
 from offregister_fab_utils import Package
 from offregister_fab_utils.fs import get_tempdir_fab
+from offregister_fab_utils import skip_apt_update
 
 
 def is_installed(*packages):
