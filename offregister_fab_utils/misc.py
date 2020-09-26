@@ -15,7 +15,7 @@ if version[0] == "2":
 from fabric.api import run, sudo, hide, settings, env, put, abort, get
 from fabric.contrib.files import exists
 from fabric.utils import apply_lcwd
-from offutils import get_sorted_strnum
+from offutils import get_sorted_strnum, ensure_quoted
 
 from offregister_fab_utils.ubuntu.version import ubuntu_version
 
@@ -262,3 +262,30 @@ def get_user_group_tuples(user):
         ),
         run("id {user}".format(user=user)).split(" ")[:2],
     )
+
+
+def remote_newer_than(remote_location, time_since_epoch):
+    """
+    Find whether the remote is newer
+
+    :param remote_location: Location on remote host
+    :type remote_location: ```str``
+
+    :param time_since_epoch: Time since epoch #UNIX
+    :type time_since_epoch: ```int```
+
+    :return: Whether the remote is newer than `time_since_epoch`
+    :rtype: ```bool```
+    """
+    last_changed = int(
+        run(
+            "stat -c '%Z' {remote_location}".format(
+                remote_location=ensure_quoted(remote_location)
+            ),
+            warn_only=True,
+            quiet=True,
+        )
+        or 0
+    )
+
+    return last_changed > time_since_epoch
