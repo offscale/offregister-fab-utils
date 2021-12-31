@@ -1,4 +1,5 @@
-from fabric.operations import sudo, local, run
+from fabric.operations import local, run, sudo
+
 from offregister_fab_utils.fs import cmd_avail
 
 

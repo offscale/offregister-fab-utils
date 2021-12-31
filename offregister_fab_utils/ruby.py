@@ -1,8 +1,7 @@
-from fabric.api import sudo, run
+from fabric.api import sudo
 
-from offregister_fab_utils.apt import apt_depends, is_installed
 from offregister_fab_utils import Package
-from offregister_fab_utils.fs import cmd_avail
+from offregister_fab_utils.apt import apt_depends, is_installed
 
 
 def install(version="2.3", *args, **kwargs):

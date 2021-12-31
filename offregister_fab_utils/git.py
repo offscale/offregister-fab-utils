@@ -1,7 +1,6 @@
 from fabric.context_managers import cd
 from fabric.contrib.files import exists
 from fabric.operations import run, sudo
-
 from offutils.util import iterkeys
 
 

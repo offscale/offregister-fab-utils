@@ -3,16 +3,16 @@ from operator import is_
 from sys import version
 
 if version[0] == "2":
-    from itertools import imap as map, ifilterfalse as filterfalse
+    from itertools import ifilterfalse as filterfalse
+    from itertools import imap as map
 else:
     from itertools import filterfalse
 
-from fabric.api import run, sudo, cd
+from fabric.api import cd, run, sudo
 from fabric.context_managers import prefix
 
 from offregister_fab_utils import Package
 from offregister_fab_utils.fs import get_tempdir_fab
-from offregister_fab_utils import skip_apt_update
 
 
 def is_installed(*packages):
@@ -20,7 +20,7 @@ def is_installed(*packages):
     :param packages: ```Union[str, Package]```
     :type packages: ```Tuple[Union[str, Package]]```
 
-    :return: packages which need installed
+    :returns: packages which need installed
     :rtype: ```Tuple[Union[str, Package]]```
     """
     return tuple(
@@ -83,7 +83,7 @@ def download_and_install(url_prefix, packages):
 
 
 def get_pretty_name():
-    """ E.g.: `precise`, `yakkety` """
+    """E.g.: `precise`, `yakkety`"""
 
     with prefix("source /etc/os-release"):
         name = run('echo ${VERSION/*, /} | { read f _ ; echo "${f,,}"; }')

@@ -3,9 +3,9 @@ from sys import version
 if version[0] == "2":
     from itertools import imap as map, ifilter as filter
 
-from offregister_fab_utils import Package
-
 from fabric.operations import _run_command
+
+from offregister_fab_utils import Package
 
 
 def _cleanup_pkg_name(pkg):  # type: (str) -> str

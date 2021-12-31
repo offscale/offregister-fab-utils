@@ -1,4 +1,4 @@
-from fabric.operations import sudo, run
+from fabric.operations import run, sudo
 
 from offregister_fab_utils.apt import apt_depends
 

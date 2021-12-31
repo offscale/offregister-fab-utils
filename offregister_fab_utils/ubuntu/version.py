@@ -4,7 +4,7 @@ from fabric.operations import run
 def ubuntu_version():
     """
 
-    :return: 14.04 or 16.04 (&etc.)
+    :returns: 14.04 or 16.04 (&etc.)
     """
     return float(
         run(

@@ -1,6 +1,5 @@
 import operator
 import os
-
 from collections import namedtuple
 from functools import partial
 from os import path
@@ -12,10 +11,10 @@ import six
 if version[0] == "2":
     from itertools import imap as map
 
-from fabric.api import run, sudo, hide, settings, env, put, abort, get
+from fabric.api import abort, env, get, hide, put, run, settings, sudo
 from fabric.contrib.files import exists
 from fabric.utils import apply_lcwd
-from offutils import get_sorted_strnum, ensure_quoted
+from offutils import ensure_quoted, get_sorted_strnum
 
 from offregister_fab_utils.ubuntu.version import ubuntu_version
 
@@ -105,7 +104,7 @@ def timeout(duration, cmd):
            e.g.: '120s' for 2 minutes
     :type duration: ``str``
 
-    :return: string to be executed containing bash sub
+    :returns: string to be executed containing bash sub
     :rtype: ``str``
     """
     return "( cmdpid=$BASHPID; (sleep {duration}; kill $cmdpid) & exec {cmd} )".format(
@@ -254,7 +253,7 @@ def upload_template_fmt(
 def get_user_group_tuples(user):
     """
     :param user: user
-    :return: unroll with `(uid, user), (gid, group) = get_user_group_tuples('myusername')`
+    :returns: unroll with `(uid, user), (gid, group) = get_user_group_tuples('myusername')`
     """
     return map(
         lambda s: (lambda p: (int(p[0]), p[2][:-1]))(
@@ -274,7 +273,7 @@ def remote_newer_than(remote_location, time_since_epoch):
     :param time_since_epoch: Time since epoch #UNIX
     :type time_since_epoch: ```int```
 
-    :return: Whether the remote is newer than `time_since_epoch`
+    :returns: Whether the remote is newer than `time_since_epoch`
     :rtype: ```bool```
     """
     last_changed = int(
