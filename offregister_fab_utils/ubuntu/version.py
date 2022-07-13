@@ -16,8 +16,8 @@ def ubuntu_version(c):
             fi
         done<"/etc/lsb-release"
         """,
-            quiet=True,
-            warn_only=True,
+            hide=True,
+            warn=True,
         )
     )
 

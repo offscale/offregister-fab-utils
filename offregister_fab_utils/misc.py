@@ -11,8 +11,6 @@ import six
 if version[0] == "2":
     from itertools import imap as map
 
-from fabric.contrib.files import exists
-from fabric.utils import apply_lcwd
 from offutils import ensure_quoted, get_sorted_strnum
 
 from offregister_fab_utils.ubuntu.version import ubuntu_version
@@ -212,8 +210,8 @@ def upload_template_fmt(
     if pty is not None:
         func = partial(func, pty=pty)
     # Normalize destination to be an actual filename, due to using StringIO
-    with c.settings(c.hide("everything"), warn_only=True):
-        if func("test -d %s" % destination.replace(" ", r"\ ")).succeeded:
+    with c.settings(c.hide("everything"), warn=True):
+        if func("test -d %s" % destination.replace(" ", r"\ ")).exited == 0:
             sep = "" if destination.endswith("/") else "/"
             destination += sep + os.path.basename(filename)
 
@@ -221,7 +219,7 @@ def upload_template_fmt(
     # StringIO
     if mirror_local_mode and mode is None:
         mode = os.stat(apply_lcwd(filename, c.env)).st_mode
-        # To prevent put() from trying to do this
+        # To prevent c.put() from trying to do this
         # logic itself
         mirror_local_mode = False
 
@@ -257,7 +255,7 @@ def upload_template_fmt(
             text = text.format(**context) if use_fmt else text % context
 
     # Back up original file
-    if backup and exists(destination):
+    if backup and exists(c, runner=c.run, path=destination):
         target = destination.replace(" ", r"\ ")
         func("cp %s %s.bak" % (target, target))
 
@@ -315,8 +313,8 @@ def remote_newer_than(c, remote_location, time_since_epoch):
             "stat -c '%Z' {remote_location}".format(
                 remote_location=ensure_quoted(remote_location)
             ),
-            warn_only=True,
-            quiet=True,
+            warn=True,
+            hide=True,
         )
         or 0
     )

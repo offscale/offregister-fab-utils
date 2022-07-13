@@ -58,9 +58,10 @@ def is_not_installed(c, python=None, use_sudo=False, *packages):
                         python=python, package="'{}'".format(_cleanup_pkg_name(package))
                     ),
                     sudo=use_sudo,
-                    warn_only=True,
-                    quiet=True,
-                ).failed
+                    warn=True,
+                    hide=True,
+                ).exited
+                != 0
                 and package,
                 packages,
             ),

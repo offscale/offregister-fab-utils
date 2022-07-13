@@ -1,7 +1,6 @@
 from os import path
 from sys import modules
 
-from fabric.contrib.files import upload_template
 from pkg_resources import resource_filename
 
 

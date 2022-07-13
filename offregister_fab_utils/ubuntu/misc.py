@@ -31,7 +31,7 @@ def user_group_tuple(c, use_sudo=False):
 
     return (lambda ug: (ug[0], ug[1]) if len(ug) > 1 else (ug[0], ug[0]))(
         (c.sudo if use_sudo else c.run)(
-            '''printf '%s\t%s' "$USER" "$GROUP"''', quiet=True, shell_escape=False
+            '''printf '%s\t%s' "$USER" "$GROUP"''', hide=True, shell_escape=False
         ).split("\t")
     )
 

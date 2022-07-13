@@ -1,9 +1,9 @@
-from fabric.contrib.files import exists
-from fabric.operations import run, sudo
 from offutils.util import iterkeys
+from patchwork.files import exists
 
 
 def clone_or_update(
+    c,
     repo,
     branch="stable",
     remote="origin",
@@ -19,7 +19,10 @@ def clone_or_update(
     reset_to_first=False,
 ):
     """
-    clone or update git repo
+    `clone` or update git repo
+
+    :param c: Connection
+    :type c: ```fabric.connection.Connection```
 
     :param repo: Repository
     :type repo: ```str```
@@ -59,6 +62,9 @@ def clone_or_update(
 
     :param reset_to_first: Whether `git reset --hard` to first commit
     :type reset_to_first: ```bool```
+
+    :return: What occurred
+    :rtype: ```Literal["updated", "cloned"]```
     """
     # TODO: Properly parse the URL
     if repo[: len("http")] in frozenset(("http", "ssh:")):
@@ -69,9 +75,9 @@ def clone_or_update(
             repo = repo[:rf]
 
     to_dir = to_dir or repo
-    cmd_runner = cmd_runner if cmd_runner is not None else sudo if use_sudo else run
-    if exists("{to_dir}/.git".format(to_dir=to_dir), use_sudo=use_sudo):
-        with cd(to_dir):
+    cmd_runner = cmd_runner if cmd_runner is not None else c.sudo if use_sudo else c.run
+    if exists(c, runner=c.run, path="{to_dir}/.git".format(to_dir=to_dir)):
+        with c.cd(to_dir):
             if not skip_clean:
                 cmd_runner("git clean -fd")
 
@@ -88,7 +94,8 @@ def clone_or_update(
                     cmd_runner("git pull")
                     return "updated"
 
-            if not skip_checkout:
+            cmd_runner("true")
+            if not skip_checkout and cmd_runner("git branch --show-current").stdout != branch:
                 cmd_runner(
                     "git fetch {remote} {branch} && git checkout {branch}".format(
                         branch=branch, remote=remote
@@ -101,7 +108,7 @@ def clone_or_update(
                     )
                 )
 
-            cmd_runner("git merge FETCH_HEAD", warn_only=True)
+            cmd_runner("git merge FETCH_HEAD", warn=True)
         return "updated"
     else:
         cmd_runner("mkdir -p {to_dir}".format(to_dir=to_dir))
@@ -113,8 +120,9 @@ def clone_or_update(
                 depth="" if depth is None else "--depth={depth}".format(depth=depth),
             )
         )
-        with cd(to_dir):
-            cmd_runner("git checkout -f {branch}".format(branch=branch))
+        with c.cd(to_dir):
+            if cmd_runner("git branch --show-current").stdout != branch:
+                cmd_runner("git checkout -f {branch}".format(branch=branch))
             if tag is not None:
                 cmd_runner(
                     "git fetch --all --tags --prune && git checkout tags/{tag}".format(

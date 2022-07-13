@@ -33,14 +33,15 @@ def is_installed(c, *packages):
                     c.run(
                         "rpm -q --queryformat '%{VERSION}' "
                         + "{}".format(package.name),
-                        warn_only=True,
+                        warn=True,
                     ).startswith(package.version)
                     if isinstance(package, Package)
                     else c.run(
                         "rpm -q {package}".format(package=package),
-                        quiet=True,
-                        warn_only=True,
-                    ).succeeded
+                        hide=True,
+                        warn=True,
+                    ).exited
+                    == 0
                 )
                 or package,
                 packages,
@@ -68,7 +69,7 @@ def yum_depends(c, *packages):
     if not more_to_install:
         return None
     elif not skip_yum_update:
-        c.sudo("yum check-update", quiet=True)
+        c.sudo("yum check-update", hide=True)
     return c.sudo(
         "yum install -y {packages}".format(
             packages=" ".join(
@@ -107,7 +108,7 @@ def download_and_install(c, url_prefix, packages):
         )
         c.sudo("rpm -i {package}".format(package=package))
 
-    with c.cd(get_tempdir_fab()):
+    with c.cd(get_tempdir_fab(c)):
         return tuple(map(one, packages))
 
 

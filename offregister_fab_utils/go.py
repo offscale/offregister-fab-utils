@@ -1,5 +1,3 @@
-from fabric.contrib.files import append
-
 from offregister_fab_utils.fs import append_path
 
 

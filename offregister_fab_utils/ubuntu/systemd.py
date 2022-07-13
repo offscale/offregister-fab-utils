@@ -1,7 +1,6 @@
 from os import path
 from sys import modules
 
-from fabric.contrib.files import upload_template
 from pkg_resources import resource_filename
 
 
@@ -14,12 +13,15 @@ def restart_systemd(c, service_name):
     :type service_name: ```str```
     """
     c.sudo("systemctl daemon-reload")
-    if c.sudo(
-        "systemctl status -q {service_name} --no-pager --full".format(
-            service_name=service_name
-        ),
-        warn_only=True,
-    ).failed:
+    if (
+        c.sudo(
+            "systemctl status -q {service_name} --no-pager --full".format(
+                service_name=service_name
+            ),
+            warn=True,
+        ).exited
+        != 0
+    ):
         c.sudo(
             "systemctl start -q {service_name} --no-pager --full".format(
                 service_name=service_name
@@ -90,9 +92,12 @@ def disable_service(c, service):
     :param service: service name
     :type service: ```str```
     """
-    if c.sudo(
-        "systemctl is-active --quiet {service}".format(service=service), warn_only=True
-    ).succeeded:
+    if (
+        c.sudo(
+            "systemctl is-active --quiet {service}".format(service=service), warn=True
+        ).exited
+        == 0
+    ):
         c.sudo("systemctl stop {service}".format(service=service))
         c.sudo("sudo systemctl disable {service}".format(service=service))
 
