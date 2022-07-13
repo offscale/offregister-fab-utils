@@ -1,44 +1,63 @@
 from os import path
 from sys import modules
 
-from fabric.api import sudo
 from fabric.contrib.files import upload_template
 from pkg_resources import resource_filename
 
 
-def restart_systemd(service_name):
-    sudo("systemctl daemon-reload")
-    if sudo(
+def restart_systemd(c, service_name):
+    """
+    :param c: Connection
+    :type c: ```fabric.connection.Connection```
+
+    :param service_name: Service name
+    :type service_name: ```str```
+    """
+    c.sudo("systemctl daemon-reload")
+    if c.sudo(
         "systemctl status -q {service_name} --no-pager --full".format(
             service_name=service_name
         ),
         warn_only=True,
     ).failed:
-        sudo(
+        c.sudo(
             "systemctl start -q {service_name} --no-pager --full".format(
                 service_name=service_name
             )
         )
     else:
-        sudo(
+        c.sudo(
             "systemctl stop -q {service_name} --no-pager --full".format(
                 service_name=service_name
             )
         )
-        sudo(
+        c.sudo(
             "systemctl start -q {service_name} --no-pager --full".format(
                 service_name=service_name
             )
         )
 
-    return sudo(
+    return c.sudo(
         "systemctl status {service_name} --no-pager --full".format(
             service_name=service_name
         )
     )
 
 
-def install_upgrade_service(service_name, context, conf_local_filepath=None):
+def install_upgrade_service(c, service_name, context, conf_local_filepath=None):
+    """
+    :param c: Connection
+    :type c: ```fabric.connection.Connection```
+
+    :param service_name: Service name
+    :type service_name: ```str```
+
+    :param context: Interpolate into context
+    :type context: ```dict```
+
+    :param conf_local_filepath: Local filepath to config
+    :type conf_local_filepath: ```Optional[str]```
+    """
     conf_local_filepath = conf_local_filepath or resource_filename(
         modules[__name__].__name__.rpartition(".")[0].rpartition(".")[0],
         path.join("configs", "systemd.conf"),
@@ -60,12 +79,22 @@ def install_upgrade_service(service_name, context, conf_local_filepath=None):
         use_sudo=True,
         backup=False,
     )
-    return restart_systemd(service_name)
+    return restart_systemd(c, service_name)
 
 
-def disable_service(service):
-    if sudo(
+def disable_service(c, service):
+    """
+    :param c: Connection
+    :type c: ```fabric.connection.Connection```
+
+    :param service: service name
+    :type service: ```str```
+    """
+    if c.sudo(
         "systemctl is-active --quiet {service}".format(service=service), warn_only=True
     ).succeeded:
-        sudo("systemctl stop {service}".format(service=service))
-        sudo("sudo systemctl disable {service}".format(service=service))
+        c.sudo("systemctl stop {service}".format(service=service))
+        c.sudo("sudo systemctl disable {service}".format(service=service))
+
+
+__all__ = ["disable_service", "install_upgrade_service", "restart_systemd"]

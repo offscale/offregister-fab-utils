@@ -11,7 +11,6 @@ import six
 if version[0] == "2":
     from itertools import imap as map
 
-from fabric.api import abort, env, get, hide, put, run, settings, sudo
 from fabric.contrib.files import exists
 from fabric.utils import apply_lcwd
 from offutils import ensure_quoted, get_sorted_strnum
@@ -113,18 +112,41 @@ def timeout(duration, cmd):
 
 
 def get_load_remote_file(
-    directory, filename, use_sudo=True, load_f=lambda ident: ident, sep="/"
+    c, directory, filename, use_sudo=True, load_f=lambda ident: ident, sep="/"
 ):
+    """
+    :param c: Connection
+    :type c: ```fabric.connection.Connection```
+
+    :param directory: Remote directory
+    :type directory: ```str```
+
+    :param filename: Remote filename
+    :type filename: ```str```
+
+    :param use_sudo: Whether to run with `sudo`
+    :type use_sudo: ```bool```
+
+    :param load_f: Run this function against the downloaded payload
+    :type load_f: ```Callable[[Any], Any]```
+
+    :param sep: Path separator
+    :type sep: ```str```
+
+    :return: NamedTuple of: "remote_path", "content"
+    :rtype: ```NamedTuple('_', [('remote_path', str), ('content', str)])```
+    """
     remote_path = "{directory}{sep}{filename}".format(
         directory=directory, sep=sep, filename=filename
     )
     tmpdir = mkdtemp(prefix="offregister")
-    get(local_path=tmpdir, remote_path=remote_path, use_sudo=use_sudo)
+    c.get(local_path=tmpdir, remote_path=remote_path, use_sudo=use_sudo)
     with open(path.join(tmpdir, filename)) as f:
         return namedtuple("_", ("remote_path", "content"))(remote_path, load_f(f))
 
 
 def upload_template_fmt(
+    c,
     filename,
     destination,
     context=None,
@@ -182,12 +204,15 @@ def upload_template_fmt(
         Added the ``keep_trailing_newline`` kwarg.
     .. versionchanged:: 1.11
         Added the  ``temp_dir`` kwarg.
+
+    :param c: Connection
+    :type c: ```fabric.connection.Connection```
     """
-    func = use_sudo and sudo or run
+    func = use_sudo and c.sudo or c.run
     if pty is not None:
         func = partial(func, pty=pty)
     # Normalize destination to be an actual filename, due to using StringIO
-    with settings(hide("everything"), warn_only=True):
+    with c.settings(c.hide("everything"), warn_only=True):
         if func("test -d %s" % destination.replace(" ", r"\ ")).succeeded:
             sep = "" if destination.endswith("/") else "/"
             destination += sep + os.path.basename(filename)
@@ -195,7 +220,7 @@ def upload_template_fmt(
     # Use mode kwarg to implement mirror_local_mode, again due to using
     # StringIO
     if mirror_local_mode and mode is None:
-        mode = os.stat(apply_lcwd(filename, env)).st_mode
+        mode = os.stat(apply_lcwd(filename, c.env)).st_mode
         # To prevent put() from trying to do this
         # logic itself
         mirror_local_mode = False
@@ -205,7 +230,7 @@ def upload_template_fmt(
     if use_jinja:
         try:
             template_dir = template_dir or os.getcwd()
-            template_dir = apply_lcwd(template_dir, env)
+            template_dir = apply_lcwd(template_dir, c.env)
             from jinja2 import Environment, FileSystemLoader
 
             jenv = Environment(
@@ -221,11 +246,11 @@ def upload_template_fmt(
             import traceback
 
             tb = traceback.format_exc()
-            abort(tb + "\nUnable to import Jinja2 -- see above.")
+            c.abort(tb + "\nUnable to import Jinja2 -- see above.")
     else:
         if template_dir:
             filename = os.path.join(template_dir, filename)
-        filename = apply_lcwd(filename, env)
+        filename = apply_lcwd(filename, c.env)
         with open(os.path.expanduser(filename)) as inputfile:
             text = inputfile.read()
         if context:
@@ -240,7 +265,7 @@ def upload_template_fmt(
         text = text.decode("utf-8")
 
     # Upload the file.
-    return put(
+    return c.put(
         local_path=six.StringIO(text),
         remote_path=destination,
         use_sudo=use_sudo,
@@ -250,22 +275,31 @@ def upload_template_fmt(
     )
 
 
-def get_user_group_tuples(user):
+def get_user_group_tuples(c, user):
     """
+    :param c: Connection
+    :type c: ```fabric.connection.Connection```
+
     :param user: user
-    :returns: unroll with `(uid, user), (gid, group) = get_user_group_tuples('myusername')`
+    :type user: ```str```
+
+    :return: unroll with `(uid, user), (gid, group) = get_user_group_tuples('myusername')`
+    :rtype: ```Generator[Tuple[Tuple[str,str,str], Tuple[str,str,str]]]```
     """
     return map(
         lambda s: (lambda p: (int(p[0]), p[2][:-1]))(
             s.partition("=")[2].partition("(")
         ),
-        run("id {user}".format(user=user)).split(" ")[:2],
+        c.run("id {user}".format(user=user)).split(" ")[:2],
     )
 
 
-def remote_newer_than(remote_location, time_since_epoch):
+def remote_newer_than(c, remote_location, time_since_epoch):
     """
     Find whether the remote is newer
+
+    :param c: Connection
+    :type c: ```fabric.connection.Connection```
 
     :param remote_location: Location on remote host
     :type remote_location: ```str``
@@ -277,7 +311,7 @@ def remote_newer_than(remote_location, time_since_epoch):
     :rtype: ```bool```
     """
     last_changed = int(
-        run(
+        c.run(
             "stat -c '%Z' {remote_location}".format(
                 remote_location=ensure_quoted(remote_location)
             ),
@@ -288,3 +322,13 @@ def remote_newer_than(remote_location, time_since_epoch):
     )
 
     return last_changed > time_since_epoch
+
+
+__all__ = [
+    "get_load_remote_file",
+    "get_user_group_tuples",
+    "merge_funcs",
+    "process_funcs",
+    "remote_newer_than",
+    "upload_template_fmt",
+]

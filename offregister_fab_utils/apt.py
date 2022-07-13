@@ -8,15 +8,17 @@ if version[0] == "2":
 else:
     from itertools import filterfalse
 
-from fabric.api import cd, run, sudo
-from fabric.context_managers import prefix
-
 from offregister_fab_utils import Package
 from offregister_fab_utils.fs import get_tempdir_fab
 
 
-def is_installed(*packages):
+def is_installed(c, *packages):
     """
+    Checks which of the provided `packages` are not installed
+
+    :param c: Connection
+    :type c: ```fabric.connection.Connection```
+
     :param packages: ```Union[str, Package]```
     :type packages: ```Tuple[Union[str, Package]]```
 
@@ -28,13 +30,13 @@ def is_installed(*packages):
             partial(is_, True),
             map(
                 lambda package: (
-                    run(
+                    c.run(
                         "dpkg-query --showformat='${Version}' "
                         + "--show {}".format(package.name),
                         warn_only=True,
                     ).startswith(package.version)
                     if isinstance(package, Package)
-                    else run(
+                    else c.run(
                         "dpkg -s {package}".format(package=package),
                         quiet=True,
                         warn_only=True,
@@ -53,14 +55,23 @@ def apt_depend_factory(skip_update=False):
     return apt_depends
 
 
-def apt_depends(*packages):
+def apt_depends(c, *packages):
+    """
+    :param c: Connection
+    :type c: ```fabric.connection.Connection```
+
+    :param packages: ```Union[str, Package]```
+    :type packages: ```Tuple[Union[str, Package]]```
+
+    :return: ResultSet
+    """
     global skip_apt_update
     more_to_install = is_installed(*packages)
     if not more_to_install:
         return None
     elif not skip_apt_update:
-        sudo("apt-get update -qq")
-    return sudo(
+        c.sudo("apt-get update -qq")
+    return c.sudo(
         "apt-get install -y {packages}".format(
             packages=" ".join(
                 pkg.name if isinstance(pkg, Package) else pkg for pkg in more_to_install
@@ -69,28 +80,55 @@ def apt_depends(*packages):
     )
 
 
-def download_and_install(url_prefix, packages):
+def download_and_install(c, url_prefix, packages):
+    """
+    Download and install given packages
+
+    :param c: Connection
+    :type c: ```fabric.connection.Connection```
+
+    :param url_prefix: URL prefix
+    :type url_prefix: ```str```
+
+    :param packages: Packages to install
+    :type packages: ```Iterable[str]```
+
+    :return: List of installed packages
+    :rtype: ```bool```
+    """
+
     def one(package):
-        run(
+        c.run(
             "curl -OL {url_prefix}{package}".format(
                 url_prefix=url_prefix, package=package
             )
         )
-        sudo("dpkg -i {package}".format(package=package))
+        c.sudo("dpkg -i {package}".format(package=package))
 
     with cd(get_tempdir_fab()):
         return tuple(map(one, packages))
 
 
-def get_pretty_name():
-    """E.g.: `precise`, `yakkety`"""
+def get_pretty_name(c):
+    """
+    E.g.: `precise`, `yakkety`
 
-    with prefix("source /etc/os-release"):
-        name = run('echo ${VERSION/*, /} | { read f _ ; echo "${f,,}"; }')
-        if name.startswith("1"):
-            name = run("echo $UBUNTU_CODENAME")
+    :param c: Connection
+    :type c: ```fabric.connection.Connection```
+
+    :return: $UBUNTU_CODENAME
+    :rtype: ```str```
+    """
+
+    with c.prefix("source /etc/os-release"):
+        name = c.run('echo ${VERSION/*, /} | { read f _ ; echo "${f,,}"; }')
+        if name.stdout.startswith("1"):
+            name = c.run("echo $UBUNTU_CODENAME")
 
     if not name:
         raise ValueError("name not set")
 
     return name
+
+
+__all__ = ["apt_depends", "download_and_install", "get_pretty_name", "is_installed"]

@@ -1,2 +1,2 @@
-fab-classic
-paramiko
+fabric2
+etcd3

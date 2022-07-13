@@ -1,4 +1,3 @@
-from fabric.context_managers import cd
 from fabric.contrib.files import exists
 from fabric.operations import run, sudo
 from offutils.util import iterkeys
@@ -19,6 +18,48 @@ def clone_or_update(
     cmd_runner=None,
     reset_to_first=False,
 ):
+    """
+    clone or update git repo
+
+    :param repo: Repository
+    :type repo: ```str```
+
+    :param branch: Branch
+    :type branch: ```str```
+
+    :param remote: Remote
+    :type remote: ```str```
+
+    :param team: Team (on GH: organisation or individual)
+    :type team: ```str```
+
+    :param tag: Tag
+    :type tag: ```Optional[str]```
+
+    :param skip_checkout: Whether to skip `git checkout`
+    :type skip_checkout: ```bool```
+
+    :param skip_reset: Whether to skip `git reset --hard`
+    :type skip_reset: ```bool```
+
+    :param skip_clean: Whether to skip `git clean -fd`
+    :type skip_clean: ```bool```
+
+    :param to_dir: Target directory
+    :type to_dir: ```bool```
+
+    :param depth: depth
+    :type depth: ```Optional[int]```
+
+    :param use_sudo: Whether to run with `sudo`
+    :type use_sudo: ```bool```
+
+    :param cmd_runner: Use this instead of `run`
+    :type cmd_runner: ```Optional[Callable[[str],None]]```
+
+    :param reset_to_first: Whether `git reset --hard` to first commit
+    :type reset_to_first: ```bool```
+    """
     # TODO: Properly parse the URL
     if repo[: len("http")] in frozenset(("http", "ssh:")):
         team, _, repo = repo.rpartition("/")
@@ -85,6 +126,15 @@ def clone_or_update(
 
 
 def url_to_git_dict(static_git_url):
+    """
+    Parse URL into `git_dict` that can be passed along to `clone_or_update`
+
+    :param static_git_url: URL
+    :type static_git_url: ```str```
+
+    :return: Dictionary with keys: ("repo", "team", "branch")
+    :rtype: ```dict```
+    """
     if isinstance(type(static_git_url), dict):
         requires_set = frozenset(("repo", "team", "branch"))
         given_keys_set = frozenset(iterkeys(static_git_url))
@@ -113,3 +163,6 @@ def url_to_git_dict(static_git_url):
 
 def install_hook_listener():
     raise NotImplementedError()
+
+
+__all__ = ["clone_or_update", "url_to_git_dict"]
