@@ -67,7 +67,8 @@ def install_upgrade_service(c, service_name, context, conf_local_filepath=None):
     conf_remote_filename = "/lib/systemd/system/{service_name}.service".format(
         service_name=service_name
     )
-    upload_template(
+    upload_template_fmt(
+        c,
         conf_local_filepath,
         conf_remote_filename,
         context={

@@ -41,7 +41,8 @@ def install_upgrade_service(
             root=root, service_name=service_name
         )
     )
-    upload_template(
+    upload_template_fmt(
+        c,
         conf_local_filepath,
         conf_remote_filename,
         context={"LABEL": service_name, "PROGRAM": context["PROGRAM"]},

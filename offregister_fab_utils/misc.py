@@ -205,8 +205,47 @@ def upload_template_fmt(
 
     :param c: Connection
     :type c: ```fabric.connection.Connection```
+
+    :param filename:
+    :type filename: ```str```
+
+    :param destination:
+    :type destination: ```str```
+
+    :param context: Dictionary of vars to interpolate
+    :type context: ```Optional[dict]```
+
+    :param use_jinja: Whether to use `Jinja2` for interpolation
+    :type use_jinja: ```bool```
+
+    :param use_fmt: Whether to use `str.format` for interpolation
+    :type use_fmt: ```str```
+
+    :param template_dir:
+    :type template_dir: ```Optional[str]```
+
+    :param use_sudo: Whether to enable `sudo`
+    :type use_sudo: ```bool```
+
+    :param backup: Whether to create a backup-of-original file
+    :type backup: ```bool```
+
+    :param mirror_local_mode: Whether to `chmod` the remote file so it matches the local file's mode
+    :type mirror_local_mode: ```bool```
+
+    :param mode: Whether to `chmod` the remote file to a certain mode
+    :type mode: ```Optional[int]```
+
+    :param pty:
+    :type pty: ```Optional[Any]```
+
+    :param keep_trailing_newline: Whether to keep trailing newline
+    :type keep_trailing_newline: ```bool```
+
+    :param temp_dir: Temporary directory
+    :type temp_dir: ```Optional[str]```
     """
-    func = use_sudo and c.sudo or c.run
+    func = c.sudo if use_sudo else c.run
     if pty is not None:
         func = partial(func, pty=pty)
     # Normalize destination to be an actual filename, due to using StringIO

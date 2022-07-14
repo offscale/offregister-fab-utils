@@ -95,7 +95,10 @@ def clone_or_update(
                     return "updated"
 
             cmd_runner("true")
-            if not skip_checkout and cmd_runner("git branch --show-current").stdout != branch:
+            if (
+                not skip_checkout
+                and cmd_runner("git branch --show-current").stdout != branch
+            ):
                 cmd_runner(
                     "git fetch {remote} {branch} && git checkout {branch}".format(
                         branch=branch, remote=remote
