@@ -49,7 +49,7 @@ def clone_or_update(
     :type skip_clean: ```bool```
 
     :param to_dir: Target directory
-    :type to_dir: ```bool```
+    :type to_dir: ```Optional[str]```
 
     :param depth: depth
     :type depth: ```Optional[int]```
@@ -77,6 +77,7 @@ def clone_or_update(
     to_dir = to_dir or repo
     cmd_runner = cmd_runner if cmd_runner is not None else c.sudo if use_sudo else c.run
     if exists(c, runner=c.run, path="{to_dir}/.git".format(to_dir=to_dir)):
+        c.sudo("cd /tmp")
         with c.cd(to_dir):
             if not skip_clean:
                 cmd_runner("git clean -fd")

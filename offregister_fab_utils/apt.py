@@ -34,15 +34,20 @@ def is_installed(c, *packages):
                     c.run(
                         "dpkg-query --showformat='${Version}' "
                         + "--show {}".format(package.name),
-                        warn=True,
-                    ).startswith(package.version)
-                    if isinstance(package, Package)
-                    else c.run(
-                        "dpkg -s {package}".format(package=package),
                         hide=True,
                         warn=True,
-                    ).exited
-                    == 0
+                        env={"DEBIAN_FRONTEND": "noninteractive"},
+                    ).stdout.startswith(package.version)
+                    if isinstance(package, Package)
+                    else (
+                        c.run(
+                            "dpkg -s {package}".format(package=package),
+                            hide=True,
+                            warn=True,
+                            env={"DEBIAN_FRONTEND": "noninteractive"},
+                        ).exited
+                        == 0
+                    )
                 )
                 or package,
                 packages,
@@ -80,17 +85,18 @@ def apt_depends(c, *packages):
     :return: Result
     :rtype: ```fabric.runners.Result```
     """
-    more_to_install = is_installed(*packages)
+    more_to_install = is_installed(c, *packages)
     if not more_to_install:
         return None
     elif not offregister_fab_utils.skip_apt_update:
-        c.sudo("apt-get update -qq")
+        c.sudo("apt-get update -qq", env={"DEBIAN_FRONTEND": "noninteractive"})
     return c.sudo(
-        "apt-get install -y {packages}".format(
+        "apt-get install -qqy {packages}".format(
             packages=" ".join(
                 pkg.name if isinstance(pkg, Package) else pkg for pkg in more_to_install
             )
-        )
+        ),
+        env={"DEBIAN_FRONTEND": "noninteractive"},
     )
 
 
@@ -123,7 +129,10 @@ def download_and_install(c, url_prefix, packages):
                 url_prefix=url_prefix, package=package
             )
         )
-        c.sudo("dpkg -i {package}".format(package=package))
+        c.sudo(
+            "dpkg -i {package}".format(package=package),
+            env={"DEBIAN_FRONTEND": "noninteractive"},
+        )
 
     with c.cd(get_tempdir_fab(c, c.run)):
         return tuple(map(one, packages))

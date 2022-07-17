@@ -85,20 +85,20 @@ def pip_depends(c, python=None, use_sudo=False, *packages):
     :param packages: Packages
     :type packages: ```*packages```
     """
+    run_cmd = c.sudo if use_sudo else c.run
     if python is None:
-        python = c._run_command("which python", sudo=use_sudo)
+        python = run_cmd("which python")
     more_to_install = is_not_installed(python, use_sudo, *packages)
     if not more_to_install:
         return None
-    return c._run_command(
+    return run_cmd(
         "{python} -m pip install {packages}".format(
             python=python,
             packages=" ".join(
                 "==".join((pkg.name, pkg.version)) if isinstance(pkg, Package) else pkg
                 for pkg in more_to_install
             ),
-        ),
-        sudo=use_sudo,
+        )
     )
 
 

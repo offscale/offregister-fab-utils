@@ -65,7 +65,7 @@ def yum_depends(c, *packages):
     :type packages: ```Tuple[Union[str, Package]]```
     """
     global skip_yum_update
-    more_to_install = is_installed(*packages)
+    more_to_install = is_installed(c, *packages)
     if not more_to_install:
         return None
     elif not skip_yum_update:
