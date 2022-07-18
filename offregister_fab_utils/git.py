@@ -1,3 +1,6 @@
+from collections import deque
+from string import Template
+
 from offutils.util import iterkeys
 from patchwork.files import exists
 
@@ -17,6 +20,7 @@ def clone_or_update(
     use_sudo=False,
     cmd_runner=None,
     reset_to_first=False,
+    git_env=None,
 ):
     """
     `clone` or update git repo
@@ -63,6 +67,9 @@ def clone_or_update(
     :param reset_to_first: Whether `git reset --hard` to first commit
     :type reset_to_first: ```bool```
 
+    :param git_env: Additional environment variables; currently only `GITHUB_ACCESS_TOKEN` key is used
+    :type git_env: ```Optional[dict]``
+
     :return: What occurred
     :rtype: ```Literal["updated", "cloned"]```
     """
@@ -76,7 +83,40 @@ def clone_or_update(
 
     to_dir = to_dir or repo
     cmd_runner = cmd_runner if cmd_runner is not None else c.sudo if use_sudo else c.run
-    if exists(c, runner=c.run, path="{to_dir}/.git".format(to_dir=to_dir)):
+    extra_git_commands = ""
+    config_cmds = tuple()
+    user_pass = ""
+    if git_env.get("GIT_ACCESS_TOKEN") and git_env.get("GIT_USER"):
+        config_cmds = tuple()
+        user_pass = "{}:{}".format(
+            "oauth2", git_env["GIT_ACCESS_TOKEN"]  # git_env["GIT_USER"],
+        )
+
+        # Should Remove `--global`
+        # config_cmds = (
+        #     'git config --global user.name "{git_user}"'.format(git_user=git_env["GIT_USER"]),
+        #     # 'git config user.email "{git_email}"'.format(
+        #     #     git_email=git_env["GIT_EMAIL"]
+        #     # ),
+        #     'git config --global url."https://api:{git_access_token}@github.com/".insteadOf "https://github.com/"'.format(
+        #         git_access_token=git_env["GIT_ACCESS_TOKEN"]
+        #     ),
+        #     'git config --global url."https://ssh:{git_access_token}@github.com/".insteadOf "ssh://git@github.com/"'.format(
+        #         git_access_token=git_env["GIT_ACCESS_TOKEN"]
+        #     ),
+        #     'git config --global url."https://git:{git_access_token}@github.com/".insteadOf "git@github.com:"'.format(
+        #         git_access_token=git_env["GIT_ACCESS_TOKEN"]
+        #     ),
+        # )
+        extra_git_commands = Template(
+            "-c credential.helper= "
+            "-c credential.helper='!f() { echo username=$git_user; echo password=$git_access_token; };f'"
+        ).substitute(
+            git_access_token=git_env["GIT_ACCESS_TOKEN"], git_user=git_env["GIT_USER"]
+        )
+    if frozenset(git_env.keys()) ^ frozenset({"GIT_ACCESS_TOKEN", "GIT_USER"}):
+        raise NotImplementedError("git_env has too many keys!")
+    if exists(c, runner=cmd_runner, path="{to_dir}/.git".format(to_dir=to_dir)):
         c.sudo("cd /tmp")
         with c.cd(to_dir):
             if not skip_clean:
@@ -92,36 +132,40 @@ def clone_or_update(
                     cmd_runner(
                         "git reset --hard $(git rev-list --max-parents=0 --abbrev-commit HEAD)"
                     )
-                    cmd_runner("git pull")
+                    cmd_runner(
+                        "git pull {extra_git_commands}".format(
+                            extra_git_commands=extra_git_commands
+                        )
+                    )
                     return "updated"
 
-            cmd_runner("true")
             if (
                 not skip_checkout
                 and cmd_runner("git branch --show-current").stdout != branch
             ):
                 cmd_runner(
-                    "git fetch {remote} {branch} && git checkout {branch}".format(
-                        branch=branch, remote=remote
-                    )
+                    "git fetch {remote} {branch}"
+                    " && git checkout {branch}".format(branch=branch, remote=remote)
                 )
             if tag is not None:
                 cmd_runner(
-                    "git fetch --all --tags --prune && git checkout tags/{tag}".format(
-                        tag=tag
-                    )
+                    "git fetch --all --tags --prune"
+                    " && git checkout tags/{tag}".format(tag=tag)
                 )
 
             cmd_runner("git merge FETCH_HEAD", warn=True)
         return "updated"
     else:
         cmd_runner("mkdir -p {to_dir}".format(to_dir=to_dir))
+        deque(map(cmd_runner, config_cmds), maxlen=0)
         cmd_runner(
-            "git clone https://github.com/{team}/{repo}.git {to_dir} {depth}".format(
+            "git clone {extra_git_commands} https://{user_pass}github.com/{team}/{repo}.git {to_dir} {depth}".format(
+                user_pass=user_pass,
                 team=team,
                 repo=repo,
                 to_dir=to_dir,
                 depth="" if depth is None else "--depth={depth}".format(depth=depth),
+                extra_git_commands=extra_git_commands,
             )
         )
         with c.cd(to_dir):
@@ -129,11 +173,9 @@ def clone_or_update(
                 cmd_runner("git checkout -f {branch}".format(branch=branch))
             if tag is not None:
                 cmd_runner(
-                    "git fetch --all --tags --prune && git checkout tags/{tag}".format(
-                        tag=tag
-                    )
+                    "git fetch --all --tags --prune"
+                    " && git checkout tags/{tag}".format(tag=tag)
                 )
-
         return "cloned"
 
 
