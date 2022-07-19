@@ -327,7 +327,7 @@ def get_user_group_tuples(c, user):
         lambda s: (lambda p: (int(p[0]), p[2][:-1]))(
             s.partition("=")[2].partition("(")
         ),
-        c.run("id {user}".format(user=user)).split(" ")[:2],
+        c.run("id {user}".format(user=user)).stdout.split(" ")[:2],
     )
 
 

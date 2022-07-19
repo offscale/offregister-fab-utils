@@ -44,7 +44,9 @@ def is_not_installed(c, python=None, use_sudo=False, *packages):
     :rtype: ```Tuple[str]```
     """
     if python is None:
-        python = c._run_command("which python", sudo=use_sudo)
+        python = (
+            c.sudo if kwargs.get("node_sudo", kwargs.get("use_sudo", False)) else c.run
+        )("which python").stdout
 
     packages = (package for packages_ in packages for package in packages_)
 
@@ -52,12 +54,11 @@ def is_not_installed(c, python=None, use_sudo=False, *packages):
         filter(
             None,
             map(
-                lambda package: c._run_command(
+                lambda package: (c.sudo if use_sudo else c.run)(
                     "{python} -c "
                     "'import pkgutil; exit(0 if pkgutil.find_loader({package}) else 2)'".format(
                         python=python, package="'{}'".format(_cleanup_pkg_name(package))
                     ),
-                    sudo=use_sudo,
                     warn=True,
                     hide=True,
                 ).exited
