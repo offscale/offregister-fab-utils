@@ -3,10 +3,12 @@ import os
 from collections import namedtuple
 from functools import partial
 from os import path
+from random import randint
 from sys import version
 from tempfile import mkdtemp
 
 import six
+from patchwork.files import exists
 
 if version[0] == "2":
     from itertools import imap as map
@@ -138,9 +140,23 @@ def get_load_remote_file(
         directory=directory, sep=sep, filename=filename
     )
     tmpdir = mkdtemp(prefix="offregister")
-    c.get(local_path=tmpdir, remote_path=remote_path, use_sudo=use_sudo)
+    c.get(local=tmpdir, remote=remote_path, use_sudo=use_sudo)
     with open(path.join(tmpdir, filename)) as f:
         return namedtuple("_", ("remote_path", "content"))(remote_path, load_f(f))
+
+
+def apply_lcwd(p, env):
+    """
+    :param p: The path
+    :type p: ```str```
+
+    :param env: The environment
+    :type env: ```NamedTuple('Env', [('lcwd', bool)])```
+    """
+    # Apply CWD if a relative path
+    if not os.path.isabs(p) and env.lcwd:
+        p = os.path.join(env.lcwd, p)
+    return p
 
 
 def upload_template_fmt(
@@ -153,7 +169,7 @@ def upload_template_fmt(
     template_dir=None,
     use_sudo=False,
     backup=True,
-    mirror_local_mode=False,
+    preserve_mode=False,
     mode=None,
     pty=None,
     keep_trailing_newline=False,
@@ -182,7 +198,7 @@ def upload_template_fmt(
     By default, the file will be copied to ``destination`` as the logged-in
     user; specify ``use_sudo=True`` to use `sudo` instead.
 
-    The ``mirror_local_mode``, ``mode``, and ``temp_dir`` kwargs are passed
+    The ``preserve_mode``, ``mode``, and ``temp_dir`` kwargs are passed
     directly to an internal `~fabric.operations.put` call; please see its
     documentation for details on these two options.
 
@@ -195,7 +211,7 @@ def upload_template_fmt(
     behaviour.
 
     .. versionchanged:: 1.1
-        Added the ``backup``, ``mirror_local_mode`` and ``mode`` kwargs.
+        Added the ``backup``, ``preserve_mode`` and ``mode`` kwargs.
     .. versionchanged:: 1.9
         Added the ``pty`` kwarg.
     .. versionchanged:: 1.11
@@ -230,8 +246,8 @@ def upload_template_fmt(
     :param backup: Whether to create a backup-of-original file
     :type backup: ```bool```
 
-    :param mirror_local_mode: Whether to `chmod` the remote file so it matches the local file's mode
-    :type mirror_local_mode: ```bool```
+    :param preserve_mode: Whether to `chmod` the remote file so it matches the local file's mode
+    :type preserve_mode: ```bool```
 
     :param mode: Whether to `chmod` the remote file to a certain mode
     :type mode: ```Optional[int]```
@@ -249,18 +265,22 @@ def upload_template_fmt(
     if pty is not None:
         func = partial(func, pty=pty)
     # Normalize destination to be an actual filename, due to using StringIO
-    with c.settings(c.hide("everything"), warn=True):
-        if func("test -d %s" % destination.replace(" ", r"\ ")).exited == 0:
-            sep = "" if destination.endswith("/") else "/"
-            destination += sep + os.path.basename(filename)
+    if (
+        func(
+            "test -d %s" % destination.replace(" ", r"\ "), hide=True, warn=True
+        ).exited
+        == 0
+    ):
+        sep = "" if destination.endswith("/") else "/"
+        destination += sep + os.path.basename(filename)
 
-    # Use mode kwarg to implement mirror_local_mode, again due to using
+    # Use mode kwarg to implement preserve_mode, again due to using
     # StringIO
-    if mirror_local_mode and mode is None:
+    if preserve_mode and mode is None:
         mode = os.stat(apply_lcwd(filename, c.env)).st_mode
         # To prevent c.put() from trying to do this
         # logic itself
-        mirror_local_mode = False
+        preserve_mode = False
 
     # Process template
     text = None
@@ -287,7 +307,7 @@ def upload_template_fmt(
     else:
         if template_dir:
             filename = os.path.join(template_dir, filename)
-        filename = apply_lcwd(filename, c.env)
+        filename = apply_lcwd(filename, namedtuple("Env", ("lcwd",))(True))
         with open(os.path.expanduser(filename)) as inputfile:
             text = inputfile.read()
         if context:
@@ -301,15 +321,33 @@ def upload_template_fmt(
     if six.PY3 is True and isinstance(text, bytes):
         text = text.decode("utf-8")
 
-    # Upload the file.
-    return c.put(
-        local_path=six.StringIO(text),
-        remote_path=destination,
-        use_sudo=use_sudo,
-        mirror_local_mode=mirror_local_mode,
-        mode=mode,
-        temp_dir=temp_dir,
-    )
+    if use_sudo:
+        dest_path = path.dirname(destination)
+        if not exists(c, runner=c.sudo, path=dest_path):
+            c.sudo("mkdir -p {dest_path}".format(dest_path=dest_path))
+        temp_remote_location = "/tmp/{}__{}".format(
+            path.basename(destination), randint(1, 2500)
+        )
+        c.put(
+            local=six.StringIO(text),
+            remote=temp_remote_location,
+            preserve_mode=preserve_mode,
+        )
+        return func(
+            "mv {temp_remote_location} {destination}".format(
+                temp_remote_location=temp_remote_location, destination=destination
+            )
+        )
+    else:
+        # Upload the file.
+        return c.put(
+            local=six.StringIO(text),
+            remote=destination,
+            # use_sudo=use_sudo,
+            preserve_mode=preserve_mode,
+            # mode=mode,
+            # temp_dir=temp_dir,
+        )
 
 
 def get_user_group_tuples(c, user):
