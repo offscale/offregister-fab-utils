@@ -3,6 +3,8 @@ from sys import modules
 
 from pkg_resources import resource_filename
 
+from offregister_fab_utils.misc import upload_template_fmt
+
 
 def restart_systemd(c, service_name):
     """
@@ -39,11 +41,13 @@ def restart_systemd(c, service_name):
             )
         )
 
-    return c.sudo(
+    res = c.sudo(
         "systemctl status {service_name} --no-pager --full".format(
             service_name=service_name
         )
     )
+    # Suppose a `journalctl --no-pager -u {service_name}` could be done on failure instead…
+    return res.stdout if res.exited == 0 else res.stderr
 
 
 def install_upgrade_service(c, service_name, context, conf_local_filepath=None):

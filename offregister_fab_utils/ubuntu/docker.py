@@ -9,7 +9,7 @@ def install_0(c, package="docker-engine"):
     :param package: Package name
     :type package: ```str```
     """
-    uname_r = c.run("uname -r")
+    uname_r = c.run("uname -r").stdout.rstrip()
     os_codename = c.run("lsb_release -cs")
     apt_depends(
         c,
