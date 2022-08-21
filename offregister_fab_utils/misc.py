@@ -405,5 +405,6 @@ __all__ = [
     "merge_funcs",
     "process_funcs",
     "remote_newer_than",
+    "require_os_version",
     "upload_template_fmt",
 ]

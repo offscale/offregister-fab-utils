@@ -1,32 +1,29 @@
 from offregister_fab_utils.apt import apt_depends
 
 
-def install_0(c, package="docker-engine"):
+def install_0(c):
     """
     :param c: Connection
     :type c: ```fabric.connection.Connection```
-
-    :param package: Package name
-    :type package: ```str```
     """
-    uname_r = c.run("uname -r").stdout.rstrip()
-    os_codename = c.run("lsb_release -cs")
     apt_depends(
         c,
-        "apt-transport-https",
-        "ca-certificates",
-        "software-properties-common",
-        "curl",
-        "linux-image-extra-{}".format(uname_r),
-        "linux-image-extra-virtual",
+        "ca-certificates" "curl" "gnupg" "lsb-release",
     )
-    c.run("curl -fsSL https://yum.dockerproject.org/gpg | sudo apt-key add -")
+    c.sudo("mkdir -p /etc/apt/keyrings")
+    c.run("curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o docker.gpg")
+    c.sudo("gpg --dearmor -o /etc/apt/keyrings/docker.gpg docker.gpg")
+
     c.sudo(
-        'add-apt-repository "deb https://apt.dockerproject.org/repo/ ubuntu-{} main"'.format(
-            os_codename
-        )
+        'echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg]'
+        ' https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" |'
+        ' tee /etc/apt/sources.list.d/docker.list',
+        quiet=True,
     )
-    apt_depends(c, package)
+    c.sudo("apt-get update -qq")
+    apt_depends(
+        c, "docker-ce", "docker-ce-cli", "containerd.io", "docker-compose-plugin"
+    )
     c.sudo("systemctl enable docker")
 
 
