@@ -141,7 +141,7 @@ def clone_or_update(
 
             if (
                 not skip_checkout
-                and cmd_runner("git branch --show-current").stdout != branch
+                and cmd_runner("git rev-parse --abbrev-ref HEAD").stdout != branch
             ):
                 cmd_runner(
                     "git fetch {remote} {branch}"
@@ -169,7 +169,7 @@ def clone_or_update(
             )
         )
         with c.cd(to_dir):
-            if cmd_runner("git branch --show-current").stdout != branch:
+            if cmd_runner("git rev-parse --abbrev-ref HEAD").stdout != branch:
                 cmd_runner("git checkout -f {branch}".format(branch=branch))
             if tag is not None:
                 cmd_runner(

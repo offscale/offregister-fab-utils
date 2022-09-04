@@ -1,6 +1,8 @@
+import sys
 from os import path
 from sys import modules
 
+from invoke import UnexpectedExit
 from pkg_resources import resource_filename
 
 from offregister_fab_utils.misc import upload_template_fmt
@@ -44,8 +46,17 @@ def restart_systemd(c, service_name):
     res = c.sudo(
         "systemctl status {service_name} --no-pager --full".format(
             service_name=service_name
-        )
+        ),
+        warn=True,
     )
+    if res.exited != 0:
+        print(res.stderr, file=sys.stderr)
+
+        class ExpectedExit(UnexpectedExit):
+            def __str__(self):
+                return "Encountered a bad command exit code!"
+
+        raise ExpectedExit(None)
     # Suppose a `journalctl --no-pager -u {service_name}` could be done on failure instead…
     return res.stdout if res.exited == 0 else res.stderr
 
