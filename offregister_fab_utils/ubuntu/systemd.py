@@ -10,11 +10,16 @@ from offregister_fab_utils.misc import upload_template_fmt
 
 def restart_systemd(c, service_name):
     """
+    Restart the specified systemd service after a `daemon-reload`
+
     :param c: Connection
     :type c: ```fabric.connection.Connection```
 
     :param service_name: Service name
     :type service_name: ```str```
+
+    :return: res.stdout if res.exited == 0 else res.stderr
+    :rtype: ```str```
     """
     c.sudo("systemctl daemon-reload")
     if (

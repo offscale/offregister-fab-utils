@@ -32,7 +32,7 @@ def install(c, version="1.5.3", arch="amd64", GOROOT="$HOME/go"):
     )
     append_path(c, "{install_loc}/go/bin".format(install_loc=install_loc))
     c.sudo("sed -i '0,/can/{//d}' /etc/environment")
-    append("/etc/environment", "GOROOT={GOROOT}".format(GOROOT=GOROOT), use_sudo=True)
+    append(c, c.sudo, "/etc/environment", "GOROOT={GOROOT}".format(GOROOT=GOROOT))
     c.run("rm {go_tar}".format(go_tar=go_tar))
     # c.run('rm -rf go*')
     c.run("mkdir -p {GOROOT}".format(GOROOT=GOROOT))

@@ -1,3 +1,7 @@
+from os import path, remove
+from tempfile import gettempdir
+
+
 def get_tempdir_fab(c, run_command=None, **kwargs):
     """
     Get the tempdir using the `run_command` context
@@ -44,7 +48,6 @@ def append_path(c, new_path, use_sudo=True):
             """sed -e '/^PATH/s/"$/:{new_path}"/g' -i {filename}""".format(
                 new_path=new_path.replace("/", "\/"),
                 filename=filename,
-                use_sudo=use_sudo,
             )
         )
 
@@ -87,4 +90,49 @@ def version_avail(c, cmd, version, kwarg="--version"):
     )
 
 
-__all__ = ["append_path", "cmd_avail", "get_tempdir_fab", "version_avail"]
+def put_sudo(
+    c, local, remote, preserve_mode=True, remote_temp_dir="/tmp", local_is_bytes=False
+):
+    """
+    `c.put` with `use_sudo=True`
+
+    :param c: Connection
+    :type c: ```fabric.connection.Connection```
+
+    :param local: Local path of file to upload, or a file-like object, or a str/bytes if `local_is_bytes`.
+    :type local: ```IO```
+
+    :param remote: Remote path to which the local file will be written.
+    :type remote: ```str```
+
+    :param preserve_mode:
+    :type preserve_mode: ```bool```
+
+    :param remote_temp_dir:
+    :type remote_temp_dir: ```str```
+
+    :param local_is_bytes: Whether the `local` param is bytes/str
+    :type local_is_bytes: ```bool```
+    """
+    last_slash = remote.rfind("/")
+    remote_name = remote[last_slash+1:]
+    temp_remote_path = "{}/{}".format(remote_temp_dir, remote_name)
+
+    if local_is_bytes is True:
+        tmp_local = path.join(gettempdir(), remote_name)
+        with open(tmp_local, "w") as f:
+            f.write(local)
+        c.put(local=tmp_local, remote=temp_remote_path, preserve_mode=preserve_mode)
+        remove(tmp_local)
+    else:
+        c.put(local=local, remote=temp_remote_path, preserve_mode=preserve_mode)
+    c.sudo(
+        "[ -d {parent_dir} ] || mkdir -p {parent_dir} ; mv '{temp_remote_path}' '{remote}'".format(
+            parent_dir=remote[:last_slash],
+            temp_remote_path=temp_remote_path,
+            remote=remote,
+        )
+    )
+
+
+__all__ = ["append_path", "cmd_avail", "get_tempdir_fab", "put_sudo", "version_avail"]

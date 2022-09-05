@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 __author__ = "Samuel Marks"
-__version__ = "0.0.29"
+__version__ = "0.0.30"
 
 from collections import namedtuple
 
