@@ -115,7 +115,7 @@ def put_sudo(
     :type local_is_bytes: ```bool```
     """
     last_slash = remote.rfind("/")
-    remote_name = remote[last_slash+1:]
+    remote_name = remote[last_slash + 1 :]
     temp_remote_path = "{}/{}".format(remote_temp_dir, remote_name)
 
     if local_is_bytes is True:

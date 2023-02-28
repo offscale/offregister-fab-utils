@@ -63,7 +63,8 @@ def require_os_version(expected_version, op=operator.eq):
         raise TypeError("{op.__name__} not in operators".format(op=op))
 
     def wrap(f):
-        def check(cache, *args, **kwargs):
+        def check(*args, **kwargs):
+            cache = kwargs.pop("cache")
             os_version = (
                 cache["os_version"] if "os_version" in cache else ubuntu_version()
             )
@@ -399,9 +400,29 @@ def remote_newer_than(c, remote_location, time_since_epoch):
     return last_changed > time_since_epoch
 
 
+def get_pretty_name(c):
+    """
+    E.g.: `precise`, `yakkety`
+
+    :param c: Connection
+    :type c: ```fabric.connection.Connection```
+
+    :return: "{dist} {version}"
+    :rtype: ```str```
+    """
+    name = c.run(
+        "grep -F release /etc/*elease | uniq"
+    )  # `CentOS Linux release 7.4.1708 (Core)`
+    return "{dist} {version}".format(
+        dist=name.partition(" ")[0],
+        version="".join(ch for ch in name if ch.isdigit() or ch == "."),
+    )
+
+
 __all__ = [
     "get_load_remote_file",
     "get_user_group_tuples",
+    "get_pretty_name",
     "merge_funcs",
     "process_funcs",
     "remote_newer_than",

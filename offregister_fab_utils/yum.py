@@ -2,6 +2,8 @@ from functools import partial
 from operator import is_
 from sys import version
 
+from offregister_fab_utils.misc import get_pretty_name
+
 if version[0] == "2":
     from itertools import ifilterfalse as filterfalse
     from itertools import imap as map
@@ -110,25 +112,6 @@ def download_and_install(c, url_prefix, packages):
 
     with c.cd(get_tempdir_fab(c)):
         return tuple(map(one, packages))
-
-
-def get_pretty_name(c):
-    """
-    E.g.: `precise`, `yakkety`
-
-    :param c: Connection
-    :type c: ```fabric.connection.Connection```
-
-    :return: "{dist} {version}"
-    :rtype: ```str```
-    """
-    name = c.run(
-        "cat /etc/*elease | grep release | uniq"
-    )  # `CentOS Linux release 7.4.1708 (Core)`
-    return "{dist} {version}".format(
-        dist=name.partition(" ")[0],
-        version="".join(ch for ch in name if ch.isdigit() or ch == "."),
-    )
 
 
 __all__ = ["download_and_install", "get_pretty_name", "is_installed"]
