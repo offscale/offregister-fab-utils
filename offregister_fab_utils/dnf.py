@@ -1,6 +1,6 @@
 from invoke.exceptions import UnexpectedExit
 
-from offregister_fab_utils import Package
+from offregister_fab_utils import Package, skip_dnf_update
 from offregister_fab_utils.misc import get_pretty_name
 from offregister_fab_utils.yum import download_and_install, is_installed
 
@@ -37,4 +37,6 @@ def dnf_depends(c, *packages):
     )
 
 
-__all__ = ["download_and_install", "get_pretty_name", "is_installed"]
+_ = skip_dnf_update
+
+__all__ = ["dnf_depends", "download_and_install", "get_pretty_name", "is_installed"]
