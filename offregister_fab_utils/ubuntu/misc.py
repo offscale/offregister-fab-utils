@@ -23,7 +23,7 @@ def user_group_tuple(c, use_sudo=False):
     :param use_sudo: Whether to run with `sudo`
     :type use_sudo: ```bool```
 
-    :returns: User/group tuple, with group set to user if "$GROUP" is empty
+    :return: User/group tuple, with group set to user if "$GROUP" is empty
     :rtype: ```Tuple[str, str]```
     """
 

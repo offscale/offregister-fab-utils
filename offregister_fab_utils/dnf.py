@@ -1,4 +1,5 @@
 from invoke.exceptions import UnexpectedExit
+from offutils import pp
 
 from offregister_fab_utils import Package, skip_dnf_update
 from offregister_fab_utils.misc import get_pretty_name
@@ -27,13 +28,14 @@ def dnf_depends(c, *packages):
         updated_resp = c.sudo("dnf check-update", hide=True, warn=True)
         if updated_resp == 1:
             raise UnexpectedExit(updated_resp.stderr)
+    pp({"b4::packages": packages})
     return c.sudo(
         "dnf install -y {packages}".format(
             packages=" ".join(
                 pkg.name if isinstance(pkg, Package) else pkg for pkg in more_to_install
             )
         ),
-        hide="stdout",
+        # hide="stdout",
     )
 
 

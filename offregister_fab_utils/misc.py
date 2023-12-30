@@ -19,7 +19,7 @@ from offregister_fab_utils.ubuntu.version import ubuntu_version
 
 
 def process_funcs(*funcs):
-    def process(*args, **kwargs):
+    def process(c, *args, **kwargs):
         return (
             dict(map(lambda g: ((g.__module__, g.__name__), g(*args, **kwargs)), funcs))
             if len(funcs)
@@ -104,7 +104,7 @@ def timeout(duration, cmd):
            e.g.: '120s' for 2 minutes
     :type duration: ``str``
 
-    :returns: string to be executed containing bash sub
+    :return: string to be executed containing bash sub
     :rtype: ``str``
     """
     return "( cmdpid=$BASHPID; (sleep {duration}; kill $cmdpid) & exec {cmd} )".format(
@@ -383,7 +383,7 @@ def remote_newer_than(c, remote_location, time_since_epoch):
     :param time_since_epoch: Time since epoch #UNIX
     :type time_since_epoch: ```int```
 
-    :returns: Whether the remote is newer than `time_since_epoch`
+    :return: Whether the remote is newer than `time_since_epoch`
     :rtype: ```bool```
     """
     last_changed = int(

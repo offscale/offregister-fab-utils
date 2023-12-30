@@ -24,7 +24,7 @@ def is_installed(c, *packages):
     :param packages: ```Union[str, Package]```
     :type packages: ```Tuple[Union[str, Package]]```
 
-    :returns: packages which need installed
+    :return: packages which need installed
     :rtype: ```Tuple[Union[str, Package]]```
     """
     return tuple(
@@ -114,4 +114,4 @@ def download_and_install(c, url_prefix, packages):
         return tuple(map(one, packages))
 
 
-__all__ = ["download_and_install", "get_pretty_name", "is_installed"]
+__all__ = ["download_and_install", "is_installed"]

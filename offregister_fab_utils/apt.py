@@ -23,7 +23,7 @@ def is_installed(c, *packages):
     :param packages: ```Union[str, Package]```
     :type packages: ```Tuple[Union[str, Package]]```
 
-    :returns: packages which need installed
+    :return: packages which need installed
     :rtype: ```Tuple[Union[str, Package]]```
     """
     return tuple(
