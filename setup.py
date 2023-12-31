@@ -147,7 +147,8 @@ def main():
                     lambda node: isinstance(node, Assign)
                     and any(
                         filter(
-                            lambda name: isinstance(name, Name) and name.id
+                            lambda name: isinstance(name, Name)
+                            and name.id
                             in frozenset(
                                 ("__author__", "__version__", "__description__")
                             ),
@@ -165,8 +166,12 @@ def main():
     setup(
         name=package_name_verbatim,
         author=__author__,
+        author_email="807580+SamuelMarks@users.noreply.github.com",
         version=__version__,
         description=__description__,
+        url="https://github.com/offscale/{}".format(package_name_verbatim),
+        long_description=long_description,
+        long_description_content_type="text/markdown",
         classifiers=[
             "Development Status :: 7 - Inactive",
             "Intended Audience :: Developers",
@@ -189,7 +194,7 @@ def main():
             "Programming Language :: Python :: 3.12",
         ],
         install_requires=["pyyaml", "fabric2", "etcd3", "patchwork"],
-        test_suite=package_name + ".tests",
+        test_suite="{}{}tests".format(package_name, path.extsep),
         packages=find_packages(),
         package_dir={package_name: package_name},
         data_files=[
