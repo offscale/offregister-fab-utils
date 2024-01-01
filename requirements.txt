@@ -1,4 +1,4 @@
-fabric2
 etcd3
-patchwork
+https://api.github.com/repos/LecrisUT/patchwork/zipball#egg=patchwork ; python_version>='3.5'
+patchwork ; python_version<'3.5'
 protobuf==3.20.3
