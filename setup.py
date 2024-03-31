@@ -126,6 +126,7 @@ def main():
         license="(Apache-2.0 OR MIT OR CC0-1.0)",
         license_files=["LICENSE-APACHE", "LICENSE-MIT", "LICENSE-CC0"],
         install_requires=[
+            "grpcio == 1.29.0 ; python_version<'3.5'",
             "etcd3",
             "pyyaml",
             "invoke >= 2.0 ; python_version>='3.5'",

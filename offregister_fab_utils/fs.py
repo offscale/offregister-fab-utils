@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from os import path, remove
 from tempfile import gettempdir
 

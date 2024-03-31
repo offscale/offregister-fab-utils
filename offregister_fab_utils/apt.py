@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from functools import partial
 from operator import is_
 from sys import version

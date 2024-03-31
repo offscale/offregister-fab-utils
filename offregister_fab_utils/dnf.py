@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from invoke.exceptions import UnexpectedExit
 from offutils import pp
 

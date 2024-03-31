@@ -1,5 +1,5 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
+
 __author__ = "Samuel Marks"
 __version__ = "0.0.32"
 __description__ = "Utility functions for Fabric (offregister)"

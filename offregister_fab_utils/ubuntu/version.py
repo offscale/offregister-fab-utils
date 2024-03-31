@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 def ubuntu_version(c):
     """
     :param c: Connection
